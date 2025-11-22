@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "name": "The Wall Base",
+  "iconUrl": "https://your-app.vercel.app/icon.png",
+  "homeUrl": "https://your-app.vercel.app",
+  "splashImageUrl": "https://your-app.vercel.app/splash.png",
+  "splashBackgroundColor": "#1e293b",
+  "primaryCategory": "social",
+  "tags": ["nft", "social", "base"],
+  "accountAssociation": {
+    "type": "farcaster",
+    "accountUrl": "https://your-app.vercel.app"
+  }
+}
+

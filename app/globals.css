@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pixel-dark: #0f172a;
+  --pixel-purple: #7f5af0;
+  --pixel-yellow: #ffcc00;
+  --pixel-teal: #00d1b2;
+  --pixel-bg: #1e293b;
+}
+
+* {
+  font-family: 'Press Start 2P', monospace;
+}
+
+html, body {
+  @apply bg-pixel-bg text-white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+/* Уменьшаем размер шрифта для мелких элементов */
+.text-xs {
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.text-sm {
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.text-base {
+  font-size: 12px;
+}
+
+.text-lg {
+  font-size: 14px;
+}
+
+.text-xl {
+  font-size: 16px;
+}
+
+.text-2xl {
+  font-size: 20px;
+}
+
+.pixel-border {
+  @apply border-2 border-black;
+  box-shadow: 
+    2px 2px 0px 0px rgba(0, 0, 0, 1),
+    -2px -2px 0px 0px rgba(255, 255, 255, 0.1);
+}
+
+.pixel-button {
+  @apply pixel-border bg-pixel-purple text-white px-4 py-2 cursor-pointer;
+  @apply active:translate-x-[1px] active:translate-y-[1px];
+  @apply transition-transform duration-75;
+}
+
+.pixel-button:hover {
+  @apply bg-purple-600;
+}
+
+.pixel-input {
+  @apply pixel-border bg-pixel-dark text-white px-3 py-2;
+  @apply focus:outline-none focus:ring-2 focus:ring-pixel-teal;
+}
+
+.pixel-card {
+  @apply pixel-border bg-pixel-dark p-4;
+}
+
+.scroll-button {
+  @apply fixed z-50 w-12 h-12 pixel-button rounded-full;
+  @apply flex items-center justify-center text-lg;
+}
+
