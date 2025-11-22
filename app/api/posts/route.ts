@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin, supabase } from '@/lib/supabase'
 import { getAuthFromRequest } from '@/lib/auth'
 import { z } from 'zod'
+import * as kv from '@/lib/kv'
 
 const createPostSchema = z.object({
   text: z.string().min(1).max(280),
@@ -24,40 +24,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Address mismatch' }, { status: 403 })
     }
 
-    const supabaseAdmin = getSupabaseAdmin()
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-
     // Generate metadata URI (will be updated after mint)
     const localId = crypto.randomUUID()
-    const metadataUri = `${process.env.NEXT_PUBLIC_MINIAPP_URL}/api/metadata/${localId}`
+    const metadataUri = `${process.env.NEXT_PUBLIC_MINIAPP_URL || 'http://localhost:3000'}/api/metadata/${localId}`
 
-    const { data, error } = await supabaseAdmin
-      .from('posts')
-      .insert({
-        text,
-        authorAddress: authorAddress.toLowerCase(),
-        tokenId: null,
-        tokenUri: metadataUri,
-        mintStatus: 'pending',
-        likes: 0,
-        dislikes: 0,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ 
-        error: 'Failed to create post', 
-        details: error.message,
-        hint: 'Make sure Supabase is configured with NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
-      }, { status: 500 })
-    }
+    const newPost = await kv.createPost({
+      text,
+      authorAddress: authorAddress.toLowerCase(),
+      tokenId: null,
+      tokenUri: metadataUri,
+      mintStatus: 'pending',
+      likes: 0,
+      dislikes: 0,
+    })
 
     return NextResponse.json({
-      id: data.id,
+      id: newPost.id,
       status: 'created',
       metadataUri,
     })
@@ -66,41 +48,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
     }
     console.error('POST /api/posts error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
 // GET /api/posts - Get posts with pagination
 export async function GET(request: NextRequest) {
   try {
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('createdAt', { ascending: true }) // Oldest first (top to bottom)
-      .range(offset, offset + limit - 1)
+    const posts = await kv.getPosts(limit, offset)
 
-    if (error) {
-      console.error('Supabase error:', error)
-      // Return empty array instead of error for better UX
-      return NextResponse.json({ 
-        posts: [],
-        error: 'Database not configured',
-        hint: 'Configure Supabase or use Vercel KV storage'
-      })
-    }
-
-    return NextResponse.json({ posts: data || [] })
+    return NextResponse.json({ posts })
   } catch (error) {
     console.error('GET /api/posts error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      posts: [],
+      error: 'Failed to fetch posts',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }
-

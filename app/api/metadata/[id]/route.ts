@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import * as kv from '@/lib/kv'
 
 // GET /api/metadata/:id - Get NFT metadata JSON
 export async function GET(
@@ -9,17 +9,8 @@ export async function GET(
   try {
     const { id } = params
 
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-
-    const { data: post, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !post) {
+    const post = await kv.getPost(id)
+    if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
@@ -27,8 +18,8 @@ export async function GET(
     const metadata = {
       name: `The Wall Base Post #${post.tokenId || 'Pending'}`,
       description: post.text,
-      image: `${process.env.NEXT_PUBLIC_MINIAPP_URL}/api/og-image?id=${id}`, // Placeholder
-      external_url: `${process.env.NEXT_PUBLIC_MINIAPP_URL}/posts/${id}`,
+      image: `${process.env.NEXT_PUBLIC_MINIAPP_URL || 'http://localhost:3000'}/api/og-image?id=${id}`, // Placeholder
+      external_url: `${process.env.NEXT_PUBLIC_MINIAPP_URL || 'http://localhost:3000'}/posts/${id}`,
       attributes: [
         {
           trait_type: 'Author',
@@ -60,4 +51,3 @@ export async function GET(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

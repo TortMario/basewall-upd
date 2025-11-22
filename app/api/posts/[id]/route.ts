@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase'
 import { getAuthFromRequest } from '@/lib/auth'
 import { createPublicClient, http } from 'viem'
 import { base, baseSepolia } from 'viem/chains'
 import { contractABI, contractAddress } from '@/lib/contract'
+import * as kv from '@/lib/kv'
 
 // PATCH /api/posts/:id - Update post (only owner)
 export async function PATCH(
@@ -20,19 +20,8 @@ export async function PATCH(
     const body = await request.json()
     const { text, tokenId, mintStatus } = body
 
-    const supabaseAdmin = getSupabaseAdmin()
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-
-    // Get current post
-    const { data: post, error: fetchError } = await supabaseAdmin
-      .from('posts')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (fetchError || !post) {
+    const post = await kv.getPost(id)
+    if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
@@ -75,19 +64,12 @@ export async function PATCH(
     if (tokenId !== undefined) updateData.tokenId = tokenId
     if (mintStatus !== undefined) updateData.mintStatus = mintStatus
 
-    const { data, error } = await supabaseAdmin
-      .from('posts')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error:', error)
+    const updated = await kv.updatePost(id, updateData)
+    if (!updated) {
       return NextResponse.json({ error: 'Failed to update post' }, { status: 500 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(updated)
   } catch (error) {
     console.error('PATCH /api/posts/:id error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -106,19 +88,9 @@ export async function DELETE(
     }
 
     const { id } = params
-    const supabaseAdmin = getSupabaseAdmin()
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
 
-    // Get current post
-    const { data: post, error: fetchError } = await supabaseAdmin
-      .from('posts')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (fetchError || !post) {
+    const post = await kv.getPost(id)
+    if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
@@ -154,14 +126,8 @@ export async function DELETE(
       }
     }
 
-    // Delete post and reactions
-    await supabaseAdmin.from('reactions').delete().eq('postId', id)
-    const { error } = await supabaseAdmin.from('posts').delete().eq('id', id)
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 })
-    }
+    // Delete post
+    await kv.deletePost(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -169,4 +135,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

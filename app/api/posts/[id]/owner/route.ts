@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
 import { createPublicClient, http } from 'viem'
 import { base, baseSepolia } from 'viem/chains'
 import { contractABI, contractAddress } from '@/lib/contract'
+import * as kv from '@/lib/kv'
 
 // GET /api/posts/:id/owner - Get on-chain owner of post NFT
 export async function GET(
@@ -12,17 +12,8 @@ export async function GET(
   try {
     const { id } = params
 
-    if (!supabase) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
-    }
-
-    const { data: post, error } = await supabase
-      .from('posts')
-      .select('tokenId')
-      .eq('id', id)
-      .single()
-
-    if (error || !post) {
+    const post = await kv.getPost(id)
+    if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
@@ -52,4 +43,3 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch owner' }, { status: 500 })
   }
 }
-
