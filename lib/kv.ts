@@ -1,7 +1,14 @@
 // Vercel KV / Upstash Redis adapter
 // Alternative to Supabase for storing posts and reactions
 
-import { kv } from '@vercel/kv'
+import { createClient } from '@vercel/kv'
+
+// Initialize KV client with explicit environment variables
+// Vercel automatically provides these, but we can also use explicit values
+const kv = createClient({
+  url: process.env.KV_REST_API_URL || process.env.KV_URL,
+  token: process.env.KV_REST_API_TOKEN || process.env.KV_REST_API_READ_ONLY_TOKEN,
+})
 
 export interface Post {
   id: string

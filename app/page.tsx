@@ -72,9 +72,16 @@ export default function Home() {
               <textarea
                 defaultValue={editingPost.text}
                 maxLength={280}
-                className="pixel-input w-full min-h-[60px] max-h-[120px] mb-2 text-xs resize-none"
+                className="pixel-input w-full min-h-[60px] max-h-[120px] mb-2 resize-none"
                 id="edit-textarea"
-                style={{ fontSize: '10px', lineHeight: '1.4' }}
+                style={{ 
+                  fontSize: '16px', 
+                  lineHeight: '1.4',
+                  transform: 'scale(0.625)',
+                  transformOrigin: 'left top',
+                  width: '160%',
+                  marginBottom: '20px'
+                }}
               />
               <div className="flex gap-2">
                 <button

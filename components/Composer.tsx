@@ -170,9 +170,16 @@ export function Composer({ onPostCreated }: ComposerProps) {
           onChange={(e) => setText(e.target.value)}
           placeholder="What's on your mind? (max 280 chars)"
           maxLength={280}
-          className="pixel-input w-full min-h-[60px] max-h-[120px] resize-none text-xs"
+          className="pixel-input w-full min-h-[60px] max-h-[120px] resize-none"
           disabled={isSubmitting}
-          style={{ fontSize: '10px', lineHeight: '1.4' }}
+          style={{ 
+            fontSize: '16px', 
+            lineHeight: '1.4',
+            transform: 'scale(0.625)',
+            transformOrigin: 'left top',
+            width: '160%',
+            marginBottom: '20px'
+          }}
         />
         <div className="flex items-center justify-between">
           <span className={`text-xs ${remainingChars < 20 ? 'text-pixel-yellow' : ''}`}>

@@ -11,6 +11,19 @@ const createPostSchema = z.object({
 // POST /api/posts - Create a new post
 export async function POST(request: NextRequest) {
   try {
+    // Check KV connection
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+      console.error('KV environment variables missing:', {
+        hasUrl: !!process.env.KV_REST_API_URL,
+        hasToken: !!process.env.KV_REST_API_TOKEN,
+        hasReadOnlyToken: !!process.env.KV_REST_API_READ_ONLY_TOKEN,
+      })
+      return NextResponse.json({ 
+        error: 'Database not configured',
+        hint: 'KV_REST_API_URL and KV_REST_API_TOKEN must be set'
+      }, { status: 500 })
+    }
+
     const auth = await getAuthFromRequest(request)
     if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
