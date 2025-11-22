@@ -21,6 +21,9 @@ export async function PATCH(
     const { text, tokenId, mintStatus } = body
 
     const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
 
     // Get current post
     const { data: post, error: fetchError } = await supabaseAdmin
@@ -104,6 +107,9 @@ export async function DELETE(
 
     const { id } = params
     const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
 
     // Get current post
     const { data: post, error: fetchError } = await supabaseAdmin

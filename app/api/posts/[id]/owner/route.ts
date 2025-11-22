@@ -12,6 +12,10 @@ export async function GET(
   try {
     const { id } = params
 
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
     const { data: post, error } = await supabase
       .from('posts')
       .select('tokenId')

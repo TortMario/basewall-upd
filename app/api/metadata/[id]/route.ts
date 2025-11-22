@@ -9,6 +9,10 @@ export async function GET(
   try {
     const { id } = params
 
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
     const { data: post, error } = await supabase
       .from('posts')
       .select('*')
@@ -21,7 +25,7 @@ export async function GET(
 
     // Generate metadata according to ERC-721 metadata standard
     const metadata = {
-      name: `OneStream Post #${post.tokenId || 'Pending'}`,
+      name: `The Wall Base Post #${post.tokenId || 'Pending'}`,
       description: post.text,
       image: `${process.env.NEXT_PUBLIC_MINIAPP_URL}/api/og-image?id=${id}`, // Placeholder
       external_url: `${process.env.NEXT_PUBLIC_MINIAPP_URL}/posts/${id}`,

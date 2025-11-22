@@ -83,6 +83,9 @@ export function PostList({ onEdit }: PostListProps) {
 
   // Infinite scroll
   useEffect(() => {
+    const target = observerTarget.current
+    if (!target) return
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
@@ -94,14 +97,10 @@ export function PostList({ onEdit }: PostListProps) {
       { threshold: 0.1 }
     )
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
-    }
+    observer.observe(target)
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current)
-      }
+      observer.unobserve(target)
     }
   }, [hasMore, loading, offset, loadPosts])
 

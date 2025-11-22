@@ -1,7 +1,9 @@
 // Vercel KV / Upstash Redis adapter
 // Alternative to Supabase for storing posts and reactions
 
-import { kv } from '@vercel/kv'
+// Optional import - only available in Vercel environment
+// This file is not used by default - API routes use Supabase
+// To use KV, update API routes to import from this file instead
 
 export interface Post {
   id: string
@@ -29,6 +31,12 @@ const POST_KEY_PREFIX = 'post:'
 const REACTION_KEY_PREFIX = 'reaction:'
 
 export async function createPost(post: Omit<Post, 'id' | 'createdAt'>): Promise<Post> {
+  // This function requires @vercel/kv to be installed
+  // In Vercel environment, KV is automatically available
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
+  
   const id = crypto.randomUUID()
   const createdAt = new Date().toISOString()
   const newPost: Post = {
@@ -50,6 +58,10 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt'>): Promise<
 }
 
 export async function getPosts(limit = 20, offset = 0): Promise<Post[]> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
+  
   // Get post IDs sorted by score (timestamp) ascending
   const postIds = await kv.zrange(POSTS_KEY, offset, offset + limit - 1, {
     rev: false, // ascending (oldest first)
@@ -59,17 +71,23 @@ export async function getPosts(limit = 20, offset = 0): Promise<Post[]> {
 
   // Fetch all posts
   const posts = await Promise.all(
-    postIds.map((id) => kv.get<Post>(`${POST_KEY_PREFIX}${id}`))
+    postIds.map((id: string) => kv.get<Post>(`${POST_KEY_PREFIX}${id}`))
   )
 
   return posts.filter((post): post is Post => post !== null)
 }
 
 export async function getPost(id: string): Promise<Post | null> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
   return kv.get<Post>(`${POST_KEY_PREFIX}${id}`)
 }
 
 export async function updatePost(id: string, updates: Partial<Post>): Promise<Post | null> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
   const post = await getPost(id)
   if (!post) return null
 
@@ -79,6 +97,9 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
 }
 
 export async function deletePost(id: string): Promise<boolean> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
   await kv.del(`${POST_KEY_PREFIX}${id}`)
   await kv.zrem(POSTS_KEY, id)
   
@@ -93,6 +114,9 @@ export async function deletePost(id: string): Promise<boolean> {
 
 // Reactions storage
 export async function getReaction(postId: string, userAddress: string): Promise<Reaction | null> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
   return kv.get<Reaction>(`${REACTION_KEY_PREFIX}${postId}:${userAddress.toLowerCase()}`)
 }
 
@@ -101,6 +125,9 @@ export async function setReaction(
   userAddress: string,
   type: 'like' | 'dislike'
 ): Promise<{ likes: number; dislikes: number }> {
+  // @ts-ignore - @vercel/kv is optional
+  const { kv } = await import('@vercel/kv').catch(() => ({ kv: null }))
+  if (!kv) throw new Error('@vercel/kv not available')
   const key = `${REACTION_KEY_PREFIX}${postId}:${userAddress.toLowerCase()}`
   const existing = await getReaction(postId, userAddress)
 

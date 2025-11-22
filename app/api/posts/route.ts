@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
 
     // Generate metadata URI (will be updated after mint)
     const localId = crypto.randomUUID()
@@ -66,6 +69,10 @@ export async function POST(request: NextRequest) {
 // GET /api/posts - Get posts with pagination
 export async function GET(request: NextRequest) {
   try {
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)

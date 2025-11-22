@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
     const { postId, type } = reactionSchema.parse(body)
 
     const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
 
     // Check if reaction already exists
     const { data: existing } = await supabaseAdmin
@@ -117,7 +120,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    const { data, error } = await getSupabaseAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    const { data, error } = await supabaseAdmin
       .from('reactions')
       .select('type')
       .eq('postId', postId)
