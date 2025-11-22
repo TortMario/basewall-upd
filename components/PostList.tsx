@@ -163,7 +163,7 @@ export function PostList({ onEdit }: PostListProps) {
   if (loading && posts.length === 0) {
     return (
       <div className="flex justify-center items-center py-8">
-        <span className="text-pixel-teal">Loading posts...</span>
+        <span className="text-blue-600">Loading posts...</span>
       </div>
     )
   }
@@ -183,7 +183,7 @@ export function PostList({ onEdit }: PostListProps) {
       ))}
       <div ref={observerTarget} className="h-4" />
       {loading && posts.length > 0 && (
-        <div className="text-center py-4 text-pixel-teal">Loading more...</div>
+        <div className="text-center py-4 text-blue-600">Loading more...</div>
       )}
     </div>
   )

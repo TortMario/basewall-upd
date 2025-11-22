@@ -116,7 +116,7 @@ textarea {
 }
 
 .pixel-card {
-  @apply pixel-border bg-pixel-dark p-4;
+  @apply pixel-border bg-white p-4;
 }
 
 .scroll-button {

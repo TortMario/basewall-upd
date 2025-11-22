@@ -58,7 +58,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-pixel-bg p-4 max-w-2xl mx-auto">
+    <main className="min-h-screen bg-white p-4 max-w-2xl mx-auto">
       <header className="mb-6 text-center">
         <h1 className="text-4xl font-pixel text-blue-600 mb-2">The Wall Base</h1>
         <p className="text-xs text-gray-400">NFT Social Feed on Base</p>
@@ -67,8 +67,8 @@ export default function Home() {
       {isConnected && address && (
         <>
           {editingPost ? (
-            <div className="pixel-card mb-4">
-              <h2 className="mb-2 text-sm">Edit Post</h2>
+            <div className="pixel-card mb-4 bg-white">
+              <h2 className="mb-2 text-sm text-black">Edit Post</h2>
               <textarea
                 defaultValue={editingPost.text}
                 maxLength={280}
@@ -108,9 +108,9 @@ export default function Home() {
       )}
 
       {!isConnected && (
-        <div className="pixel-card mb-4 text-center">
+        <div className="pixel-card mb-4 text-center bg-white">
           <p className="text-sm text-gray-400 mb-3">
-            Connect your Base Account to start posting
+            Wallet connected automatically in Base App
           </p>
           <ConnectWalletButton />
         </div>
