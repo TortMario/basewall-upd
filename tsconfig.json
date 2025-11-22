@@ -23,7 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["lib/kv.ts"],
   "exclude": ["node_modules", "lib/kv.ts.example"]
 }
-
