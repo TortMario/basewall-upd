@@ -43,7 +43,9 @@ export function Composer({ onPostCreated }: ComposerProps) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create post')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error || 'Failed to create post')
       }
 
       const { id, metadataUri } = await response.json()
@@ -74,6 +76,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
       console.error('Post creation error:', error)
       setMintStatus('error')
       setIsSubmitting(false)
+      // Show error message to user
+      alert(error instanceof Error ? error.message : 'Failed to create post. Please check database configuration.')
     }
   }
 
@@ -166,8 +170,9 @@ export function Composer({ onPostCreated }: ComposerProps) {
           onChange={(e) => setText(e.target.value)}
           placeholder="What's on your mind? (max 280 chars)"
           maxLength={280}
-          className="pixel-input w-full min-h-[100px] resize-none"
+          className="pixel-input w-full min-h-[60px] max-h-[120px] resize-none text-xs"
           disabled={isSubmitting}
+          style={{ fontSize: '10px', lineHeight: '1.4' }}
         />
         <div className="flex items-center justify-between">
           <span className={`text-xs ${remainingChars < 20 ? 'text-pixel-yellow' : ''}`}>

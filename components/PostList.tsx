@@ -23,7 +23,18 @@ export function PostList({ onEdit }: PostListProps) {
   const loadPosts = useCallback(async (currentOffset: number, append = false) => {
     try {
       const response = await fetch(`/api/posts?limit=20&offset=${currentOffset}`)
-      const { posts: newPosts } = await response.json()
+      const data = await response.json()
+      
+      if (!response.ok) {
+        console.error('Failed to load posts:', data)
+        if (data.error === 'Database not configured') {
+          // Show user-friendly message
+          return
+        }
+        throw new Error(data.error || 'Failed to load posts')
+      }
+      
+      const { posts: newPosts } = data
 
       if (newPosts.length === 0) {
         setHasMore(false)

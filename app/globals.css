@@ -25,6 +25,17 @@ html, body {
   image-rendering: crisp-edges;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
+  /* Prevent zoom on input focus */
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in inputs */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Уменьшаем размер шрифта для мелких элементов */

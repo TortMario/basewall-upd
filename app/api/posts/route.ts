@@ -49,7 +49,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to create post' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to create post', 
+        details: error.message,
+        hint: 'Make sure Supabase is configured with NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
+      }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -85,7 +89,12 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 })
+      // Return empty array instead of error for better UX
+      return NextResponse.json({ 
+        posts: [],
+        error: 'Database not configured',
+        hint: 'Configure Supabase or use Vercel KV storage'
+      })
     }
 
     return NextResponse.json({ posts: data || [] })
