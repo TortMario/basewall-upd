@@ -20,8 +20,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
     hash,
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!text.trim() || !address || text.length > 280) return
 
     setIsSubmitting(true)
@@ -202,12 +202,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
         </div>
       </form>
       <button
-        type="submit"
-        onClick={(e) => {
-          e.preventDefault()
-          const form = document.querySelector('form')
-          if (form) form.requestSubmit()
-        }}
+        type="button"
+        onClick={() => handleSubmit()}
         disabled={!canSubmit}
         className="pixel-button w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
