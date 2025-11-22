@@ -54,19 +54,32 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt'>): Promise<
 }
 
 export async function getPosts(limit = 20, offset = 0): Promise<Post[]> {
-  // Get post IDs sorted by score (timestamp) ascending
-  const postIds = await kv.zrange(POSTS_KEY, offset, offset + limit - 1, {
-    rev: false, // ascending (oldest first)
-  })
+  try {
+    // Get post IDs sorted by score (timestamp) ascending
+    const postIds = await kv.zrange(POSTS_KEY, offset, offset + limit - 1, {
+      rev: false, // ascending (oldest first)
+    })
 
-  if (postIds.length === 0) return []
+    if (postIds.length === 0) return []
 
-  // Fetch all posts
-  const posts = await Promise.all(
-    (postIds as string[]).map((id: string) => kv.get<Post>(`${POST_KEY_PREFIX}${id}`))
-  )
+    // Fetch all posts
+    const posts = await Promise.all(
+      (postIds as string[]).map((id: string) => kv.get<Post>(`${POST_KEY_PREFIX}${id}`))
+    )
 
-  return posts.filter((post): post is Post => post !== null)
+    return posts.filter((post): post is Post => post !== null)
+  } catch (error: any) {
+    // If key exists but is wrong type, delete it and return empty
+    if (error?.message?.includes('WRONGTYPE')) {
+      console.warn('Posts key has wrong type, resetting...')
+      try {
+        await kv.del(POSTS_KEY)
+      } catch {
+        // Ignore delete errors
+      }
+    }
+    return []
+  }
 }
 
 export async function getPost(id: string): Promise<Post | null> {

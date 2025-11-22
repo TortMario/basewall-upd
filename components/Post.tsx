@@ -80,7 +80,7 @@ export function Post({
     : null
 
   return (
-    <article className="pixel-card mb-4">
+    <article className="pixel-card mb-4 bg-white">
       <div className="flex items-start justify-between mb-2">
         <AvatarName address={ownerAddress} onClick={handleProfileClick} />
         <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export function Post({
         </div>
       </div>
 
-      <p className="mb-3 text-sm whitespace-pre-wrap break-words">{post.text}</p>
+      <p className="mb-3 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

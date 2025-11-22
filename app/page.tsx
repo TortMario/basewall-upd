@@ -60,7 +60,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-pixel-bg p-4 max-w-2xl mx-auto">
       <header className="mb-6 text-center">
-        <h1 className="text-2xl font-pixel text-pixel-yellow mb-2">The Wall Base</h1>
+        <h1 className="text-4xl font-pixel text-blue-600 mb-2">The Wall Base</h1>
         <p className="text-xs text-gray-400">NFT Social Feed on Base</p>
       </header>
 

@@ -163,49 +163,57 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const canSubmit = text.trim().length > 0 && text.length <= 280 && !isSubmitting && address
 
   return (
-    <form onSubmit={handleSubmit} className="pixel-card mb-4">
-      <div className="flex flex-col gap-2">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="What's on your mind? (max 280 chars)"
-          maxLength={280}
-          className="pixel-input w-full min-h-[60px] max-h-[120px] resize-none"
-          disabled={isSubmitting}
-          style={{ 
-            fontSize: '16px', 
-            lineHeight: '1.4',
-            transform: 'scale(0.625)',
-            transformOrigin: 'left top',
-            width: '160%',
-            marginBottom: '20px'
-          }}
-        />
-        <div className="flex items-center justify-between">
-          <span className={`text-xs ${remainingChars < 20 ? 'text-pixel-yellow' : ''}`}>
-            {remainingChars} chars
-          </span>
-          <div className="flex items-center gap-2">
-            {mintStatus === 'minting' && (
-              <span className="text-xs text-pixel-teal">Minting...</span>
-            )}
-            {mintStatus === 'success' && (
-              <span className="text-xs text-pixel-yellow">✓ Minted!</span>
-            )}
-            {mintStatus === 'error' && (
-              <span className="text-xs text-red-500">✗ Error</span>
-            )}
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="pixel-button disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Publishing...' : 'Publish'}
-            </button>
+    <div className="mb-4">
+      <form onSubmit={handleSubmit} className="pixel-card">
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="What's on your mind? (max 280 chars)"
+            maxLength={280}
+            className="pixel-input w-full resize-none"
+            disabled={isSubmitting}
+            style={{ 
+              fontSize: '16px', 
+              lineHeight: '1.4',
+              transform: 'scale(0.625)',
+              transformOrigin: 'left top',
+              width: '160%',
+              minHeight: '48px', // 60px * 0.8 = 48px (уменьшено на 20%)
+              maxHeight: '96px', // 120px * 0.8 = 96px
+            }}
+          />
+          <div className="flex items-center justify-between">
+            <span className={`text-xs ${remainingChars < 20 ? 'text-pixel-yellow' : ''}`}>
+              {remainingChars} chars
+            </span>
+            <div className="flex items-center gap-2">
+              {mintStatus === 'minting' && (
+                <span className="text-xs text-pixel-teal">Minting...</span>
+              )}
+              {mintStatus === 'success' && (
+                <span className="text-xs text-pixel-yellow">✓ Minted!</span>
+              )}
+              {mintStatus === 'error' && (
+                <span className="text-xs text-red-500">✗ Error</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </form>
+      </form>
+      <button
+        type="submit"
+        onClick={(e) => {
+          e.preventDefault()
+          const form = document.querySelector('form')
+          if (form) form.requestSubmit()
+        }}
+        disabled={!canSubmit}
+        className="pixel-button w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? 'Publishing...' : 'Publish'}
+      </button>
+    </div>
   )
 }
 

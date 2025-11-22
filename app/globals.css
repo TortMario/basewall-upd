@@ -25,7 +25,7 @@ html {
 }
 
 body {
-  @apply bg-pixel-bg text-white;
+  @apply bg-white text-black;
   font-family: 'Press Start 2P', monospace;
   font-size: 12px;
   line-height: 1.6;
@@ -111,7 +111,7 @@ textarea {
 }
 
 .pixel-input {
-  @apply pixel-border bg-pixel-dark text-white px-3 py-2;
+  @apply pixel-border bg-white text-black px-3 py-2;
   @apply focus:outline-none focus:ring-2 focus:ring-pixel-teal;
 }
 
