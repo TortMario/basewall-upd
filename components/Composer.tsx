@@ -14,7 +14,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [mintStatus, setMintStatus] = useState<'idle' | 'creating' | 'minting' | 'success' | 'error'>('idle')
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
   const { writeContract, data: hash, error: writeError, isPending: isWriting } = useWriteContract()
   const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -22,8 +22,12 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (!text.trim() || !address || text.length > 280) return
+    if (!text.trim() || !address || text.length > 280) {
+      console.warn('Submit blocked:', { hasText: !!text.trim(), hasAddress: !!address, textLength: text.length })
+      return
+    }
 
+    console.log('Starting post submission...', { text: text.trim(), address })
     setIsSubmitting(true)
     setMintStatus('creating')
 
@@ -72,7 +76,14 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error(errorData.error || 'Failed to create post')
       }
 
-      const { id, metadataUri } = await response.json()
+      const responseData = await response.json()
+      console.log('Post created response:', responseData)
+      const { id, metadataUri } = responseData
+      
+      if (!id || !metadataUri) {
+        throw new Error('Invalid response from server: missing id or metadataUri')
+      }
+
       setPendingPostId(id)
       setMintStatus('minting')
 
@@ -81,7 +92,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
         contractAddress, 
         metadataUri, 
         address,
-        contractAddressValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000'
+        contractAddressValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000',
+        contractABI: contractABI ? 'loaded' : 'missing'
       })
 
       // Validate contract address
@@ -89,30 +101,28 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error('Contract address not configured. Please set NEXT_PUBLIC_CONTRACT_ADDRESS in environment variables.')
       }
 
-      // Call writeContract - it's async but doesn't return a promise directly
-      writeContract(
-        {
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'mintTo',
-          args: [address as Address, metadataUri],
-        },
-        {
-          onSuccess: async (txHash) => {
-            console.log('Mint transaction sent successfully:', txHash)
-            // Wait for transaction confirmation
-            // The useWaitForTransactionReceipt hook will handle this
-          },
-          onError: (error) => {
-            console.error('Mint transaction error:', error)
-            setMintStatus('error')
-            setIsSubmitting(false)
-            setPendingPostId(null)
-            const errorMessage = error?.message || error?.toString() || 'Unknown error'
-            alert(`Failed to mint NFT: ${errorMessage}`)
-          },
-        }
-      )
+      if (!contractABI) {
+        throw new Error('Contract ABI not loaded')
+      }
+
+      // Call writeContract - in wagmi v2, writeContract is called directly
+      console.log('Calling writeContract with:', {
+        address: contractAddress,
+        functionName: 'mintTo',
+        args: [address, metadataUri],
+        isConnected,
+      })
+
+      // In wagmi v2, writeContract is called directly without callbacks
+      // Errors and success are handled via the hook's error and data states
+      writeContract({
+        address: contractAddress,
+        abi: contractABI,
+        functionName: 'mintTo',
+        args: [address as Address, metadataUri],
+      })
+      
+      console.log('writeContract called - waiting for hash via hook...')
     } catch (error) {
       console.error('Post creation error:', error)
       setMintStatus('error')
@@ -127,12 +137,20 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   // Handle write errors
   useEffect(() => {
-    if (writeError && mintStatus === 'minting') {
-      console.error('Write contract error:', writeError)
-      setMintStatus('error')
-      setIsSubmitting(false)
-      setPendingPostId(null)
-      alert(`Mint failed: ${writeError.message || 'Unknown error'}`)
+    if (writeError) {
+      console.error('Write contract error detected:', writeError)
+      console.error('Error details:', {
+        name: writeError.name,
+        message: writeError.message,
+        cause: writeError.cause,
+        stack: writeError.stack
+      })
+      if (mintStatus === 'minting') {
+        setMintStatus('error')
+        setIsSubmitting(false)
+        setPendingPostId(null)
+        alert(`Mint failed: ${writeError.message || 'Unknown error'}`)
+      }
     }
   }, [writeError, mintStatus])
 

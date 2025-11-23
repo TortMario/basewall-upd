@@ -96,28 +96,14 @@ export function Post({
 
     // If post has an NFT, burn it first
     if (post.tokenId && post.mintStatus === 'success') {
-      try {
-        writeContract(
-          {
-            address: contractAddress,
-            abi: contractABI,
-            functionName: 'burn',
-            args: [BigInt(post.tokenId)],
-          },
-          {
-            onError: (error) => {
-              console.error('Burn error:', error)
-              setIsDeleting(false)
-              setShowDeleteConfirm(false)
-              alert('Failed to burn NFT. Please try again.')
-            },
-          }
-        )
-      } catch (error) {
-        console.error('Burn error:', error)
-        setIsDeleting(false)
-        setShowDeleteConfirm(false)
-      }
+      console.log('Calling writeContract to burn NFT:', { tokenId: post.tokenId })
+      writeContract({
+        address: contractAddress,
+        abi: contractABI,
+        functionName: 'burn',
+        args: [BigInt(post.tokenId)],
+      })
+      // Errors will be handled via writeError in useEffect
     } else {
       // No NFT to burn, just delete the post
       await handlePostDelete()
