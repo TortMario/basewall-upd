@@ -117,7 +117,7 @@ textarea {
 
 .pixel-card {
   @apply pixel-border bg-white;
-  padding: 12px;
+  padding: 10px; /* Уменьшено на 20% от 12px */
 }
 
 .scroll-button {

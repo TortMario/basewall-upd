@@ -110,7 +110,7 @@ export function Post({
 
   return (
     <div className="mb-4 relative">
-      <article className="pixel-card bg-white" style={{ minHeight: 'auto', paddingBottom: '60px' }}>
+      <article className="pixel-card bg-white" style={{ paddingBottom: '45px' }}>
         <div className="flex items-start justify-between mb-2">
           <AvatarName address={ownerAddress} onClick={handleProfileClick} />
           <div className="flex items-center gap-2">
