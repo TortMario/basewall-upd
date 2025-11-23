@@ -38,10 +38,10 @@ export function Composer({ onPostCreated }: ComposerProps) {
           })
           if (user) {
             authorData = {
-              fid: user.fid,
-              username: user.username,
-              displayName: user.displayName,
-              pfp: user.pfp,
+              fid: user.fid ?? null,
+              username: user.username || null,
+              displayName: user.displayName || null,
+              pfp: user.pfp && user.pfp.trim() !== '' ? user.pfp : null,
               address: user.address || address,
             }
           }

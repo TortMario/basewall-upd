@@ -7,12 +7,15 @@ const createPostSchema = z.object({
   text: z.string().min(1).max(280),
   authorAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   author: z.object({
-    fid: z.number().optional(),
-    username: z.string().optional(),
-    displayName: z.string().optional(),
-    pfp: z.string().url().optional(),
+    fid: z.number().optional().nullable(),
+    username: z.string().optional().nullable(),
+    displayName: z.string().optional().nullable(),
+    pfp: z.string().optional().nullable().refine(
+      (val) => !val || val === '' || z.string().url().safeParse(val).success,
+      { message: 'pfp must be a valid URL or empty string' }
+    ),
     address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  }).optional(),
+  }).optional().nullable(),
 })
 
 // POST /api/posts - Create a new post
@@ -32,7 +35,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { text, authorAddress, author } = createPostSchema.parse(body)
+    console.log('Received POST request body:', JSON.stringify(body, null, 2))
+    
+    // Validate with better error handling
+    let validatedData
+    try {
+      validatedData = createPostSchema.parse(body)
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        console.error('Validation error:', validationError.errors)
+        return NextResponse.json({ 
+          error: 'Invalid input', 
+          details: validationError.errors 
+        }, { status: 400 })
+      }
+      throw validationError
+    }
+    
+    const { text, authorAddress, author } = validatedData
 
     // In Base App, we trust the client's authorAddress
     // In production with Quick Auth, verify JWT token
@@ -49,13 +69,19 @@ export async function POST(request: NextRequest) {
     const localId = crypto.randomUUID()
     const metadataUri = `${process.env.NEXT_PUBLIC_MINIAPP_URL || 'http://localhost:3000'}/api/metadata/${localId}`
 
+    // Clean up author data - remove null/empty values
+    const cleanedAuthor = author ? {
+      fid: author.fid ?? undefined,
+      username: author.username || undefined,
+      displayName: author.displayName || undefined,
+      pfp: author.pfp && author.pfp.trim() !== '' ? author.pfp : undefined,
+      address: author.address.toLowerCase(),
+    } : undefined
+
     const newPost = await kv.createPost({
       text,
       authorAddress: authorAddress.toLowerCase(),
-      author: author ? {
-        ...author,
-        address: author.address.toLowerCase(),
-      } : undefined,
+      author: cleanedAuthor,
       tokenId: null,
       tokenUri: metadataUri,
       mintStatus: 'pending',
