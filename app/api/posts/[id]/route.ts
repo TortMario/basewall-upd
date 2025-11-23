@@ -112,8 +112,11 @@ export async function DELETE(
           args: [BigInt(post.tokenId)],
         })
 
-        if (owner.toLowerCase() !== auth.address.toLowerCase()) {
-          return NextResponse.json({ error: 'Only token owner can delete' }, { status: 403 })
+        // If auth is provided, verify ownership
+        if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
+          if (owner.toLowerCase() !== auth.address.toLowerCase()) {
+            return NextResponse.json({ error: 'Only token owner can delete' }, { status: 403 })
+          }
         }
       } catch (error) {
         console.error('On-chain ownership check failed:', error)
