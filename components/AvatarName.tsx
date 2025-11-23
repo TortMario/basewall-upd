@@ -11,7 +11,7 @@ interface AvatarNameProps {
 
 export function AvatarName({ address, onClick }: AvatarNameProps) {
   const { address: connectedAddress } = useAccount()
-  const { ensName, isLoading: nameLoading } = useName({ address })
+  const { ensName, isLoading: nameLoading } = useName(address)
 
   return (
     <div
