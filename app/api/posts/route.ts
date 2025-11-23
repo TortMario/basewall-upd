@@ -6,16 +6,19 @@ import * as kv from '@/lib/kv'
 const createPostSchema = z.object({
   text: z.string().min(1).max(280),
   authorAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  author: z.object({
-    fid: z.number().optional().nullable(),
-    username: z.string().optional().nullable(),
-    displayName: z.string().optional().nullable(),
-    pfp: z.string().optional().nullable().refine(
-      (val) => !val || val === '' || z.string().url().safeParse(val).success,
-      { message: 'pfp must be a valid URL or empty string' }
-    ),
-    address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  }).optional().nullable(),
+  author: z.union([
+    z.object({
+      fid: z.number().optional().nullable(),
+      username: z.string().optional().nullable(),
+      displayName: z.string().optional().nullable(),
+      pfp: z.string().optional().nullable().refine(
+        (val) => !val || val === '' || z.string().url().safeParse(val).success,
+        { message: 'pfp must be a valid URL or empty string' }
+      ),
+      address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+    }),
+    z.null(),
+  ]).optional(),
 })
 
 // POST /api/posts - Create a new post
@@ -41,9 +44,10 @@ export async function POST(request: NextRequest) {
     let validatedData
     try {
       validatedData = createPostSchema.parse(body)
+      console.log('Validation passed:', { text: validatedData.text, authorAddress: validatedData.authorAddress, hasAuthor: !!validatedData.author })
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
-        console.error('Validation error:', validationError.errors)
+        console.error('Validation error:', JSON.stringify(validationError.errors, null, 2))
         return NextResponse.json({ 
           error: 'Invalid input', 
           details: validationError.errors 
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
     
     const { text, authorAddress, author } = validatedData
+    console.log('Extracted data:', { text, authorAddress, author })
 
     // In Base App, we trust the client's authorAddress
     // In production with Quick Auth, verify JWT token
@@ -78,22 +83,36 @@ export async function POST(request: NextRequest) {
       address: author.address.toLowerCase(),
     } : undefined
 
-    const newPost = await kv.createPost({
+    console.log('Creating post with data:', {
       text,
       authorAddress: authorAddress.toLowerCase(),
-      author: cleanedAuthor,
-      tokenId: null,
-      tokenUri: metadataUri,
-      mintStatus: 'pending',
-      likes: 0,
-      dislikes: 0,
-    })
-
-    return NextResponse.json({
-      id: newPost.id,
-      status: 'created',
+      hasAuthor: !!cleanedAuthor,
       metadataUri,
     })
+
+    try {
+      const newPost = await kv.createPost({
+        text,
+        authorAddress: authorAddress.toLowerCase(),
+        author: cleanedAuthor,
+        tokenId: null,
+        tokenUri: metadataUri,
+        mintStatus: 'pending',
+        likes: 0,
+        dislikes: 0,
+      })
+
+      console.log('Post created successfully:', { id: newPost.id, createdAt: newPost.createdAt })
+
+      return NextResponse.json({
+        id: newPost.id,
+        status: 'created',
+        metadataUri,
+      })
+    } catch (kvError) {
+      console.error('KV createPost error:', kvError)
+      throw kvError
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
