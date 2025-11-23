@@ -15,8 +15,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [mintStatus, setMintStatus] = useState<'idle' | 'creating' | 'minting' | 'success' | 'error'>('idle')
   const { address } = useAccount()
-  const { writeContract, data: hash } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+  const { writeContract, data: hash, error: writeError, isPending: isWriting } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({
     hash,
   })
 
@@ -77,6 +77,19 @@ export function Composer({ onPostCreated }: ComposerProps) {
       setMintStatus('minting')
 
       // Step 2: Mint NFT
+      console.log('Starting mint transaction...', { 
+        contractAddress, 
+        metadataUri, 
+        address,
+        contractAddressValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000'
+      })
+
+      // Validate contract address
+      if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Contract address not configured. Please set NEXT_PUBLIC_CONTRACT_ADDRESS in environment variables.')
+      }
+
+      // Call writeContract - it's async but doesn't return a promise directly
       writeContract(
         {
           address: contractAddress,
@@ -86,13 +99,17 @@ export function Composer({ onPostCreated }: ComposerProps) {
         },
         {
           onSuccess: async (txHash) => {
+            console.log('Mint transaction sent successfully:', txHash)
             // Wait for transaction confirmation
             // The useWaitForTransactionReceipt hook will handle this
           },
           onError: (error) => {
-            console.error('Mint error:', error)
+            console.error('Mint transaction error:', error)
             setMintStatus('error')
             setIsSubmitting(false)
+            setPendingPostId(null)
+            const errorMessage = error?.message || error?.toString() || 'Unknown error'
+            alert(`Failed to mint NFT: ${errorMessage}`)
           },
         }
       )
@@ -108,9 +125,32 @@ export function Composer({ onPostCreated }: ComposerProps) {
   // Store postId for updating after mint
   const [pendingPostId, setPendingPostId] = useState<string | null>(null)
 
+  // Handle write errors
+  useEffect(() => {
+    if (writeError && mintStatus === 'minting') {
+      console.error('Write contract error:', writeError)
+      setMintStatus('error')
+      setIsSubmitting(false)
+      setPendingPostId(null)
+      alert(`Mint failed: ${writeError.message || 'Unknown error'}`)
+    }
+  }, [writeError, mintStatus])
+
+  // Handle receipt errors
+  useEffect(() => {
+    if (receiptError && mintStatus === 'minting') {
+      console.error('Transaction receipt error:', receiptError)
+      setMintStatus('error')
+      setIsSubmitting(false)
+      setPendingPostId(null)
+      alert(`Transaction failed: ${receiptError.message || 'Unknown error'}`)
+    }
+  }, [receiptError, mintStatus])
+
   // Handle transaction confirmation
   useEffect(() => {
     if (isSuccess && mintStatus === 'minting' && hash && pendingPostId) {
+      console.log('Transaction confirmed, extracting tokenId...', { hash, pendingPostId })
       // Extract tokenId from Transfer event or contract state
       const extractTokenId = async () => {
         try {
@@ -212,8 +252,13 @@ export function Composer({ onPostCreated }: ComposerProps) {
               {remainingChars} chars
             </span>
             <div className="flex items-center gap-2">
-              {mintStatus === 'minting' && (
-                <span className="text-xs text-pixel-teal">Minting...</span>
+              {mintStatus === 'creating' && (
+                <span className="text-xs text-pixel-teal">Creating post...</span>
+              )}
+              {(mintStatus === 'minting' || isWriting || isConfirming) && (
+                <span className="text-xs text-pixel-teal">
+                  {isWriting ? 'Sending transaction...' : isConfirming ? 'Confirming...' : 'Minting...'}
+                </span>
               )}
               {mintStatus === 'success' && (
                 <span className="text-xs text-pixel-yellow">✓ Minted!</span>
