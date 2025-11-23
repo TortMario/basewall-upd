@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Name } from '@coinbase/onchainkit/identity'
+import { Avatar, Name } from '@coinbase/onchainkit'
 import { useAccount } from 'wagmi'
 import { Address } from 'viem'
 import { base } from 'wagmi/chains'
