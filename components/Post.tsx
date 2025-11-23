@@ -6,7 +6,6 @@ import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { AvatarName } from './AvatarName'
 import { Address } from 'viem'
 import { getBaseExplorerUrl, contractAddress, contractABI } from '@/lib/onchain'
-import { useName } from '@coinbase/onchainkit'
 
 interface Post {
   id: string
@@ -222,8 +221,8 @@ export function Post({
           <>
             <p className="mb-2 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {canEdit && (
                   <>
                     <button
@@ -241,30 +240,32 @@ export function Post({
                     </button>
                   </>
                 )}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => onReaction(post.id, 'like')}
-                    className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-                      userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
-                    }`}
-                  >
-                    <span className="text-sm">▲</span>
-                    <span>{post.likes}</span>
-                  </button>
-                  <button
-                    onClick={() => onReaction(post.id, 'dislike')}
-                    className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-                      userReaction === 'dislike' ? 'bg-red-600' : ''
-                    }`}
-                  >
-                    <span className="text-sm">▼</span>
-                    <span>{post.dislikes}</span>
-                  </button>
-                </div>
               </div>
-              <div className="text-[10px] text-gray-500 text-right">
+              <div className="text-[10px] text-gray-500 text-right flex-shrink-0">
                 {formatDateTime(post.createdAt)}
               </div>
+            </div>
+
+            {/* Кнопки рейтинга вынесены отдельно */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onReaction(post.id, 'like')}
+                className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+                  userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+                }`}
+              >
+                <span className="text-sm">▲</span>
+                <span>{post.likes}</span>
+              </button>
+              <button
+                onClick={() => onReaction(post.id, 'dislike')}
+                className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+                  userReaction === 'dislike' ? 'bg-red-600' : ''
+                }`}
+              >
+                <span className="text-sm">▼</span>
+                <span>{post.dislikes}</span>
+              </button>
             </div>
           </>
         )}
