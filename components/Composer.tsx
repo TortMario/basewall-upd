@@ -14,7 +14,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [mintStatus, setMintStatus] = useState<'idle' | 'creating' | 'minting' | 'success' | 'error'>('idle')
-  const { address, isConnected } = useAccount()
+  const { address } = useAccount()
   const { writeContract, data: hash, error: writeError, isPending: isWriting } = useWriteContract()
   const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -22,12 +22,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (!text.trim() || !address || text.length > 280) {
-      console.warn('Submit blocked:', { hasText: !!text.trim(), hasAddress: !!address, textLength: text.length })
-      return
-    }
+    if (!text.trim() || !address || text.length > 280) return
 
-    console.log('Starting post submission...', { text: text.trim(), address })
     setIsSubmitting(true)
     setMintStatus('creating')
 
@@ -76,9 +72,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error(errorData.error || 'Failed to create post')
       }
 
-      const responseData = await response.json()
-      console.log('Post created response:', responseData)
-      const { id, metadataUri } = responseData
+      const { id, metadataUri } = await response.json()
       
       if (!id || !metadataUri) {
         throw new Error('Invalid response from server: missing id or metadataUri')
@@ -86,15 +80,6 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
       setPendingPostId(id)
       setMintStatus('minting')
-
-      // Step 2: Mint NFT
-      console.log('Starting mint transaction...', { 
-        contractAddress, 
-        metadataUri, 
-        address,
-        contractAddressValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000',
-        contractABI: contractABI ? 'loaded' : 'missing'
-      })
 
       // Validate contract address
       if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
@@ -105,30 +90,18 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error('Contract ABI not loaded')
       }
 
-      // Call writeContract - in wagmi v2, writeContract is called directly
-      console.log('Calling writeContract with:', {
-        address: contractAddress,
-        functionName: 'mintTo',
-        args: [address, metadataUri],
-        isConnected,
-      })
-
-      // In wagmi v2, writeContract is called directly without callbacks
-      // Errors and success are handled via the hook's error and data states
+      // Mint NFT - in wagmi v2, writeContract is called directly
       writeContract({
         address: contractAddress,
         abi: contractABI,
         functionName: 'mintTo',
         args: [address as Address, metadataUri],
       })
-      
-      console.log('writeContract called - waiting for hash via hook...')
     } catch (error) {
       console.error('Post creation error:', error)
       setMintStatus('error')
       setIsSubmitting(false)
-      // Show error message to user
-      alert(error instanceof Error ? error.message : 'Failed to create post. Please check database configuration.')
+      alert(error instanceof Error ? error.message : 'Failed to create post')
     }
   }
 
@@ -137,20 +110,12 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   // Handle write errors
   useEffect(() => {
-    if (writeError) {
-      console.error('Write contract error detected:', writeError)
-      console.error('Error details:', {
-        name: writeError.name,
-        message: writeError.message,
-        cause: writeError.cause,
-        stack: writeError.stack
-      })
-      if (mintStatus === 'minting') {
-        setMintStatus('error')
-        setIsSubmitting(false)
-        setPendingPostId(null)
-        alert(`Mint failed: ${writeError.message || 'Unknown error'}`)
-      }
+    if (writeError && mintStatus === 'minting') {
+      console.error('Mint transaction error:', writeError)
+      setMintStatus('error')
+      setIsSubmitting(false)
+      setPendingPostId(null)
+      alert(`Mint failed: ${writeError.message || 'Unknown error'}`)
     }
   }, [writeError, mintStatus])
 
@@ -168,8 +133,6 @@ export function Composer({ onPostCreated }: ComposerProps) {
   // Handle transaction confirmation
   useEffect(() => {
     if (isSuccess && mintStatus === 'minting' && hash && pendingPostId) {
-      console.log('Transaction confirmed, extracting tokenId...', { hash, pendingPostId })
-      // Extract tokenId from Transfer event or contract state
       const extractTokenId = async () => {
         try {
           const { createPublicClient, http, parseEventLogs } = await import('viem')
@@ -234,6 +197,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
           console.error('Failed to extract tokenId:', error)
           setMintStatus('error')
           setIsSubmitting(false)
+          setPendingPostId(null)
         }
       }
 

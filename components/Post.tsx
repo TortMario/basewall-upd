@@ -62,12 +62,7 @@ export function Post({
 
   const handlePostDelete = async () => {
     try {
-      await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        headers: {
-          // Authorization: `Bearer ${await sdk.quickAuth.getToken()}`,
-        },
-      })
+      await fetch(`/api/posts/${post.id}`, { method: 'DELETE' })
       onDelete(post.id)
     } catch (error) {
       console.error('Delete error:', error)
@@ -96,14 +91,12 @@ export function Post({
 
     // If post has an NFT, burn it first
     if (post.tokenId && post.mintStatus === 'success') {
-      console.log('Calling writeContract to burn NFT:', { tokenId: post.tokenId })
       writeContract({
         address: contractAddress,
         abi: contractABI,
         functionName: 'burn',
         args: [BigInt(post.tokenId)],
       })
-      // Errors will be handled via writeError in useEffect
     } else {
       // No NFT to burn, just delete the post
       await handlePostDelete()

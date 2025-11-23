@@ -28,7 +28,6 @@ export default function Home() {
 
   const handlePostCreated = () => {
     setRefreshKey((prev) => prev + 1)
-    // Scroll to bottom to see new post
     setTimeout(() => {
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
     }, 100)
@@ -44,10 +43,7 @@ export default function Home() {
     try {
       await fetch(`/api/posts/${editingPost.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${await sdk.quickAuth.getToken()}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
       setEditingPost(null)

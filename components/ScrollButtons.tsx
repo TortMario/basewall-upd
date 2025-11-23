@@ -1,12 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
-
 export function ScrollButtons() {
   const scrollToTop = () => {
-    const body = document.body
-    if (body) {
-      body.scrollTo({ top: 0, behavior: 'smooth' })
+    if (document.body) {
+      document.body.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }

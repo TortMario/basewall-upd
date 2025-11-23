@@ -26,11 +26,7 @@ export function PostList({ onEdit }: PostListProps) {
       const data = await response.json()
       
       if (!response.ok) {
-        console.error('Failed to load posts:', data)
-        if (data.error === 'Database not configured') {
-          // Show user-friendly message
-          return
-        }
+        if (data.error === 'Database not configured') return
         throw new Error(data.error || 'Failed to load posts')
       }
       
@@ -47,7 +43,6 @@ export function PostList({ onEdit }: PostListProps) {
         setPosts(newPosts)
       }
 
-      // Load user reactions for new posts
       if (address) {
         const reactionPromises = newPosts.map((post: PostType) =>
           fetch(`/api/reactions?postId=${post.id}&userAddress=${address}`)
@@ -64,7 +59,6 @@ export function PostList({ onEdit }: PostListProps) {
         })
       }
 
-      // Load on-chain owners for minted posts
       const ownerPromises = newPosts
         .filter((post: PostType) => post.tokenId)
         .map((post: PostType) =>
@@ -92,7 +86,6 @@ export function PostList({ onEdit }: PostListProps) {
     loadPosts(0, false)
   }, [loadPosts])
 
-  // Infinite scroll
   useEffect(() => {
     const target = observerTarget.current
     if (!target) return
@@ -121,16 +114,12 @@ export function PostList({ onEdit }: PostListProps) {
     try {
       const response = await fetch('/api/reactions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${await sdk.quickAuth.getToken()}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, type, userAddress: address }),
       })
 
       const data = await response.json()
       if (data.success) {
-        // Update post counts
         setPosts((prev) =>
           prev.map((post) =>
             post.id === postId
@@ -139,11 +128,9 @@ export function PostList({ onEdit }: PostListProps) {
           )
         )
 
-        // Update user reaction
         setUserReactions((prev) => {
           const current = prev[postId]
           if (current === type) {
-            // Toggle off
             const updated = { ...prev }
             delete updated[postId]
             return updated

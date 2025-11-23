@@ -17,10 +17,8 @@ interface AvatarNameProps {
 }
 
 export function AvatarName({ address, author, onClick }: AvatarNameProps) {
-  // Use Base App pfp if available, otherwise fallback to address-based avatar
   const pfp = author?.pfp
   const displayName = author?.displayName || author?.username
-  const username = author?.username
 
   return (
     <div
@@ -31,7 +29,7 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
         {pfp ? (
           <img 
             src={pfp}
-            alt={displayName || username || 'Avatar'}
+            alt={displayName || 'Avatar'}
             className="w-full h-full object-cover"
           />
         ) : (

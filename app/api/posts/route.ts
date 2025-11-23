@@ -26,11 +26,6 @@ export async function POST(request: NextRequest) {
   try {
     // Check KV connection
     if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-      console.error('KV environment variables missing:', {
-        hasUrl: !!process.env.KV_REST_API_URL,
-        hasToken: !!process.env.KV_REST_API_TOKEN,
-        hasReadOnlyToken: !!process.env.KV_REST_API_READ_ONLY_TOKEN,
-      })
       return NextResponse.json({ 
         error: 'Database not configured',
         hint: 'KV_REST_API_URL and KV_REST_API_TOKEN must be set'
@@ -38,16 +33,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('Received POST request body:', JSON.stringify(body, null, 2))
     
-    // Validate with better error handling
     let validatedData
     try {
       validatedData = createPostSchema.parse(body)
-      console.log('Validation passed:', { text: validatedData.text, authorAddress: validatedData.authorAddress, hasAuthor: !!validatedData.author })
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
-        console.error('Validation error:', JSON.stringify(validationError.errors, null, 2))
         return NextResponse.json({ 
           error: 'Invalid input', 
           details: validationError.errors 
@@ -57,18 +48,14 @@ export async function POST(request: NextRequest) {
     }
     
     const { text, authorAddress, author } = validatedData
-    console.log('Extracted data:', { text, authorAddress, author })
 
-    // In Base App, we trust the client's authorAddress
-    // In production with Quick Auth, verify JWT token
+    // Verify auth if available
     const auth = await getAuthFromRequest(request)
     if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-      // If auth is provided and valid, verify address matches
       if (authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
         return NextResponse.json({ error: 'Address mismatch' }, { status: 403 })
       }
     }
-    // Otherwise, trust the client (Base App context provides the address)
 
     // Generate metadata URI (will be updated after mint)
     const localId = crypto.randomUUID()
@@ -83,36 +70,22 @@ export async function POST(request: NextRequest) {
       address: author.address.toLowerCase(),
     } : undefined
 
-    console.log('Creating post with data:', {
+    const newPost = await kv.createPost({
       text,
       authorAddress: authorAddress.toLowerCase(),
-      hasAuthor: !!cleanedAuthor,
-      metadataUri,
+      author: cleanedAuthor,
+      tokenId: null,
+      tokenUri: metadataUri,
+      mintStatus: 'pending',
+      likes: 0,
+      dislikes: 0,
     })
 
-    try {
-      const newPost = await kv.createPost({
-        text,
-        authorAddress: authorAddress.toLowerCase(),
-        author: cleanedAuthor,
-        tokenId: null,
-        tokenUri: metadataUri,
-        mintStatus: 'pending',
-        likes: 0,
-        dislikes: 0,
-      })
-
-      console.log('Post created successfully:', { id: newPost.id, createdAt: newPost.createdAt })
-
-      return NextResponse.json({
-        id: newPost.id,
-        status: 'created',
-        metadataUri,
-      })
-    } catch (kvError) {
-      console.error('KV createPost error:', kvError)
-      throw kvError
-    }
+    return NextResponse.json({
+      id: newPost.id,
+      status: 'created',
+      metadataUri,
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
