@@ -41,8 +41,6 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
       <div className="flex flex-col min-w-0">
         {displayName ? (
           <span className="text-xs text-black">{displayName}</span>
-        ) : username ? (
-          <span className="text-xs text-black">@{username}</span>
         ) : (
           <span className="text-xs text-black">
             {address.slice(0, 6)}...{address.slice(-4)}
