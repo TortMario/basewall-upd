@@ -7,10 +7,19 @@ import { kv } from '@vercel/kv'
 // If those are not set, it will throw an error at runtime
 // Make sure these env vars are set in Vercel Dashboard → Settings → Environment Variables
 
+export interface Author {
+  fid?: number
+  username?: string
+  displayName?: string
+  pfp?: string
+  address: string
+}
+
 export interface Post {
   id: string
   text: string
   authorAddress: string
+  author?: Author
   createdAt: string
   tokenId: number | null
   tokenUri: string | null

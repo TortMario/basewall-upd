@@ -7,10 +7,19 @@ import { AvatarName } from './AvatarName'
 import { Address } from 'viem'
 import { getBaseExplorerUrl, contractAddress, contractABI } from '@/lib/onchain'
 
+interface Author {
+  fid?: number
+  username?: string
+  displayName?: string
+  pfp?: string
+  address: string
+}
+
 interface Post {
   id: string
   text: string
   authorAddress: string
+  author?: Author
   createdAt: string
   tokenId: number | null
   tokenUri: string | null
@@ -49,6 +58,7 @@ export function Post({
 
   const ownerAddress = (currentOwner || post.authorAddress) as Address
   const canEdit = address && ownerAddress.toLowerCase() === address.toLowerCase()
+  const author = post.author || { address: post.authorAddress }
 
   const handlePostDelete = async () => {
     try {
@@ -164,7 +174,11 @@ export function Post({
     <div className="mb-4">
       <article className="pixel-card bg-white">
         <div className="flex items-start justify-between mb-2">
-          <AvatarName address={ownerAddress} onClick={handleProfileClick} />
+          <AvatarName 
+            address={ownerAddress} 
+            author={author}
+            onClick={handleProfileClick} 
+          />
           <div className="flex items-center gap-2">
             {post.mintStatus === 'pending' && (
               <span className="text-xs text-pixel-yellow">Minting...</span>

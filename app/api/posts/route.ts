@@ -6,6 +6,13 @@ import * as kv from '@/lib/kv'
 const createPostSchema = z.object({
   text: z.string().min(1).max(280),
   authorAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  author: z.object({
+    fid: z.number().optional(),
+    username: z.string().optional(),
+    displayName: z.string().optional(),
+    pfp: z.string().url().optional(),
+    address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  }).optional(),
 })
 
 // POST /api/posts - Create a new post
@@ -25,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { text, authorAddress } = createPostSchema.parse(body)
+    const { text, authorAddress, author } = createPostSchema.parse(body)
 
     // In Base App, we trust the client's authorAddress
     // In production with Quick Auth, verify JWT token
@@ -45,6 +52,10 @@ export async function POST(request: NextRequest) {
     const newPost = await kv.createPost({
       text,
       authorAddress: authorAddress.toLowerCase(),
+      author: author ? {
+        ...author,
+        address: author.address.toLowerCase(),
+      } : undefined,
       tokenId: null,
       tokenUri: metadataUri,
       mintStatus: 'pending',

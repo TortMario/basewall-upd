@@ -28,6 +28,29 @@ export function Composer({ onPostCreated }: ComposerProps) {
     setMintStatus('creating')
 
     try {
+      // Get user data from Base App MiniKit SDK
+      let authorData = null
+      try {
+        if (typeof window !== 'undefined' && (window as any).farcaster?.sdk) {
+          const sdk = (window as any).farcaster.sdk
+          const user = await sdk.actions.requestUser({
+            fields: ['fid', 'username', 'displayName', 'pfp', 'address'],
+          })
+          if (user) {
+            authorData = {
+              fid: user.fid,
+              username: user.username,
+              displayName: user.displayName,
+              pfp: user.pfp,
+              address: user.address || address,
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to get user data from MiniKit SDK:', error)
+        // Continue without author data if SDK is not available
+      }
+
       // Step 1: Create post in database
       const response = await fetch('/api/posts', {
         method: 'POST',
@@ -39,6 +62,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
         body: JSON.stringify({
           text: text.trim(),
           authorAddress: address,
+          author: authorData,
         }),
       })
 

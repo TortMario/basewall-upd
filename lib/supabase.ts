@@ -23,10 +23,19 @@ export function getSupabaseAdmin() {
 }
 
 // Database types
+export interface Author {
+  fid?: number
+  username?: string
+  displayName?: string
+  pfp?: string
+  address: string
+}
+
 export interface Post {
   id: string
   text: string
   authorAddress: string
+  author?: Author
   createdAt: string
   tokenId: number | null
   tokenUri: string | null
