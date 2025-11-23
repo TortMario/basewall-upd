@@ -11,15 +11,20 @@ const reactionSchema = z.object({
 // POST /api/reactions - Add or update reaction
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { postId, type } = reactionSchema.parse(body)
 
-    const result = await kv.setReaction(postId, auth.address, type)
+    // Get auth if available, otherwise use address from request body
+    const auth = await getAuthFromRequest(request)
+    const userAddress = auth?.address && auth.address !== '0x0000000000000000000000000000000000000000'
+      ? auth.address
+      : body.userAddress || '0x0000000000000000000000000000000000000000'
+
+    if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
+      return NextResponse.json({ error: 'User address required' }, { status: 400 })
+    }
+
+    const result = await kv.setReaction(postId, userAddress, type)
 
     return NextResponse.json({
       success: true,

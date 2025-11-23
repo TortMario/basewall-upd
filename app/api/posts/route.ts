@@ -24,18 +24,19 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    const auth = await getAuthFromRequest(request)
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = await request.json()
     const { text, authorAddress } = createPostSchema.parse(body)
 
-    // Verify authorAddress matches authenticated address
-    if (authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
-      return NextResponse.json({ error: 'Address mismatch' }, { status: 403 })
+    // In Base App, we trust the client's authorAddress
+    // In production with Quick Auth, verify JWT token
+    const auth = await getAuthFromRequest(request)
+    if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
+      // If auth is provided and valid, verify address matches
+      if (authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
+        return NextResponse.json({ error: 'Address mismatch' }, { status: 403 })
+      }
     }
+    // Otherwise, trust the client (Base App context provides the address)
 
     // Generate metadata URI (will be updated after mint)
     const localId = crypto.randomUUID()

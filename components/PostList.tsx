@@ -125,7 +125,7 @@ export function PostList({ onEdit }: PostListProps) {
           'Content-Type': 'application/json',
           // Authorization: `Bearer ${await sdk.quickAuth.getToken()}`,
         },
-        body: JSON.stringify({ postId, type }),
+        body: JSON.stringify({ postId, type, userAddress: address }),
       })
 
       const data = await response.json()
