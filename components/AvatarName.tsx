@@ -2,7 +2,6 @@
 
 import { Avatar, Name } from '@coinbase/onchainkit'
 import { Address } from 'viem'
-import { base } from 'viem/chains'
 
 interface AvatarNameProps {
   address: Address
@@ -24,7 +23,6 @@ export function AvatarName({ address, onClick }: AvatarNameProps) {
       <div className="flex flex-col min-w-0">
         <Name 
           address={address}
-          chain={base}
           className="text-xs text-black" 
         />
         <span className="text-[10px] text-gray-500">
