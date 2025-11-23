@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Name } from '@coinbase/onchainkit'
+import { Avatar, Name, useName } from '@coinbase/onchainkit'
 import { useAccount } from 'wagmi'
 import { Address } from 'viem'
 
@@ -11,6 +11,7 @@ interface AvatarNameProps {
 
 export function AvatarName({ address, onClick }: AvatarNameProps) {
   const { address: connectedAddress } = useAccount()
+  const { ensName, isLoading: nameLoading } = useName({ address })
 
   return (
     <div
@@ -24,10 +25,14 @@ export function AvatarName({ address, onClick }: AvatarNameProps) {
         />
       </div>
       <div className="flex flex-col">
-        <Name 
-          address={address} 
-          className="text-xs text-black" 
-        />
+        {nameLoading ? (
+          <span className="text-xs text-black">Loading...</span>
+        ) : (
+          <Name 
+            address={address} 
+            className="text-xs text-black" 
+          />
+        )}
         <span className="text-[10px] text-gray-500">
           {address.slice(0, 6)}...{address.slice(-4)}
         </span>

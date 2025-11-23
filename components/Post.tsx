@@ -5,6 +5,7 @@ import { useAccount, useChainId } from 'wagmi'
 import { AvatarName } from './AvatarName'
 import { Address } from 'viem'
 import { getBaseExplorerUrl, contractAddress } from '@/lib/onchain'
+import { useName } from '@coinbase/onchainkit'
 
 interface Post {
   id: string
@@ -39,6 +40,8 @@ export function Post({
   const chainId = useChainId()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(post.text)
 
   const ownerAddress = (currentOwner || post.authorAddress) as Address
   const canEdit = address && ownerAddress.toLowerCase() === address.toLowerCase()
@@ -75,81 +78,145 @@ export function Post({
     }
   }
 
+  const handleEditClick = () => {
+    setIsEditing(true)
+    setEditText(post.text)
+  }
+
+  const handleEditSave = async () => {
+    try {
+      await fetch(`/api/posts/${post.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: editText }),
+      })
+      setIsEditing(false)
+      onEdit({ ...post, text: editText })
+    } catch (error) {
+      console.error('Edit error:', error)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setIsEditing(false)
+    setEditText(post.text)
+  }
+
   const explorerUrl = post.tokenId
     ? getBaseExplorerUrl(chainId, contractAddress, post.tokenId)
     : null
 
   return (
-    <article className="pixel-card mb-4 bg-white">
-      <div className="flex items-start justify-between mb-2">
-        <AvatarName address={ownerAddress} onClick={handleProfileClick} />
-        <div className="flex items-center gap-2">
-          {post.mintStatus === 'pending' && (
-            <span className="text-xs text-pixel-yellow">Minting...</span>
-          )}
-          {post.mintStatus === 'success' && post.tokenId && (
-            <a
-              href={explorerUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-pixel-teal hover:underline"
-            >
-              #{post.tokenId}
-            </a>
-          )}
-          {post.mintStatus === 'failed' && (
-            <span className="text-xs text-red-500">Mint failed</span>
-          )}
-        </div>
-      </div>
-
-      <p className="mb-3 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onReaction(post.id, 'like')}
-            className={`flex items-center gap-2 text-sm pixel-button px-4 py-2 ${
-              userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
-            }`}
-          >
-            <span className="text-lg">▲</span>
-            <span className="font-bold">{post.likes}</span>
-          </button>
-          <button
-            onClick={() => onReaction(post.id, 'dislike')}
-            className={`flex items-center gap-2 text-sm pixel-button px-4 py-2 ${
-              userReaction === 'dislike' ? 'bg-red-600' : ''
-            }`}
-          >
-            <span className="text-lg">▼</span>
-            <span className="font-bold">{post.dislikes}</span>
-          </button>
-        </div>
-
-        {canEdit && (
+    <div className="mb-4 relative">
+      <article className="pixel-card bg-white" style={{ minHeight: 'auto', paddingBottom: '60px' }}>
+        <div className="flex items-start justify-between mb-2">
+          <AvatarName address={ownerAddress} onClick={handleProfileClick} />
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onEdit(post)}
-              className="text-xs pixel-button"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-xs pixel-button bg-red-600 disabled:opacity-50"
-            >
-              {showDeleteConfirm ? 'Confirm?' : 'Delete'}
-            </button>
+            {post.mintStatus === 'pending' && (
+              <span className="text-xs text-pixel-yellow">Minting...</span>
+            )}
+            {post.mintStatus === 'success' && post.tokenId && (
+              <a
+                href={explorerUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-pixel-teal hover:underline"
+              >
+                #{post.tokenId}
+              </a>
+            )}
+            {post.mintStatus === 'failed' && (
+              <span className="text-xs text-red-500">Mint failed</span>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="mt-2 text-[10px] text-gray-500 text-right">
-        {new Date(post.createdAt).toLocaleString()}
+        {isEditing ? (
+          <div className="mb-2">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              maxLength={280}
+              className="pixel-input w-full resize-none mb-2"
+              style={{ 
+                fontSize: '16px', 
+                lineHeight: '1.4',
+                transform: 'scale(0.625)',
+                transformOrigin: 'left top',
+                width: '160%',
+                minHeight: '48px',
+                maxHeight: '96px',
+              }}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditSave}
+                className="text-xs pixel-button px-2 py-1"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleEditCancel}
+                className="text-xs pixel-button bg-gray-600 px-2 py-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mb-2 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
+
+            <div className="flex items-center justify-between">
+              {canEdit && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleEditClick}
+                    className="text-xs pixel-button px-2 py-1"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-xs pixel-button bg-red-600 disabled:opacity-50 px-2 py-1"
+                  >
+                    {showDeleteConfirm ? 'Confirm?' : 'Delete'}
+                  </button>
+                </div>
+              )}
+              <div className="text-[10px] text-gray-500 text-right">
+                {new Date(post.createdAt).toLocaleString()}
+              </div>
+            </div>
+          </>
+        )}
+      </article>
+      
+      {/* Кнопки рейтинга вне рамки, в правом нижнем углу */}
+      <div className="absolute bottom-0 right-0 flex items-center gap-1">
+        <button
+          onClick={() => onReaction(post.id, 'like')}
+          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+            userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+          }`}
+        >
+          <span className="text-sm">▲</span>
+          <span>{post.likes}</span>
+        </button>
+        <button
+          onClick={() => onReaction(post.id, 'dislike')}
+          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+            userReaction === 'dislike' ? 'bg-red-600' : ''
+          }`}
+        >
+          <span className="text-sm">▼</span>
+          <span>{post.dislikes}</span>
+        </button>
       </div>
-    </article>
+    </div>
   )
 }
 

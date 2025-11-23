@@ -64,47 +64,8 @@ export default function Home() {
         <p className="text-xs text-gray-400">NFT Social Feed on Base</p>
       </header>
 
-      {isConnected && address && (
-        <>
-          {editingPost ? (
-            <div className="pixel-card mb-4 bg-white">
-              <h2 className="mb-2 text-sm text-black">Edit Post</h2>
-              <textarea
-                defaultValue={editingPost.text}
-                maxLength={280}
-                className="pixel-input w-full min-h-[60px] max-h-[120px] mb-2 resize-none"
-                id="edit-textarea"
-                style={{ 
-                  fontSize: '16px', 
-                  lineHeight: '1.4',
-                  transform: 'scale(0.625)',
-                  transformOrigin: 'left top',
-                  width: '160%',
-                  marginBottom: '20px'
-                }}
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const textarea = document.getElementById('edit-textarea') as HTMLTextAreaElement
-                    handleEditSubmit(textarea.value)
-                  }}
-                  className="pixel-button"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditingPost(null)}
-                  className="pixel-button bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <Composer onPostCreated={handlePostCreated} />
-          )}
-        </>
+      {isConnected && address && !editingPost && (
+        <Composer onPostCreated={handlePostCreated} />
       )}
 
       {!isConnected && (
