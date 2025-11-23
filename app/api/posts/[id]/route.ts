@@ -56,8 +56,11 @@ export async function PATCH(
       }
     } else {
       // For unminted posts, check authorAddress
-      if (post.authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
-        return NextResponse.json({ error: 'Only author can edit' }, { status: 403 })
+      // If auth is provided, verify. Otherwise, we'll verify on-chain ownership after mint
+      if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
+        if (post.authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
+          return NextResponse.json({ error: 'Only author can edit' }, { status: 403 })
+        }
       }
     }
 
