@@ -18,13 +18,13 @@ export function AvatarName({ address, onClick }: AvatarNameProps) {
       className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
       onClick={onClick}
     >
-      <div className="pixel-border rounded-full overflow-hidden bg-white">
+      <div className="pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 w-10 h-10">
         <Avatar 
           address={address} 
-          className="w-10 h-10"
+          className="w-full h-full object-cover"
         />
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col min-w-0">
         {nameLoading ? (
           <span className="text-xs text-black">Loading...</span>
         ) : (

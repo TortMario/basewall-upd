@@ -47,6 +47,12 @@ contract OneStreamNFT is ERC721, ERC721URIStorage, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
+    // Burn function - only token owner can burn
+    function burn(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "Only token owner can burn");
+        _burn(tokenId);
+    }
+
     // Owner functions
     function setPublicMinting(bool enabled) external onlyOwner {
         publicMintingEnabled = enabled;

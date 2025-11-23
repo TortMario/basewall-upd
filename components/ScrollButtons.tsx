@@ -3,14 +3,22 @@
 import { useRef } from 'react'
 
 export function ScrollButtons() {
-  const containerRef = useRef<HTMLDivElement>(null)
-
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const body = document.body
+    if (body) {
+      body.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const scrollToBottom = () => {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    const body = document.body
+    if (body) {
+      body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    }
   }
 
   return (

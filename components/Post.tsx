@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useChainId } from 'wagmi'
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { AvatarName } from './AvatarName'
 import { Address } from 'viem'
-import { getBaseExplorerUrl, contractAddress } from '@/lib/onchain'
+import { getBaseExplorerUrl, contractAddress, contractABI } from '@/lib/onchain'
 import { useName } from '@coinbase/onchainkit'
 
 interface Post {
@@ -42,17 +43,15 @@ export function Post({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(post.text)
+  const { writeContract, data: burnHash } = useWriteContract()
+  const { isLoading: isBurning, isSuccess: isBurnSuccess } = useWaitForTransactionReceipt({
+    hash: burnHash,
+  })
 
   const ownerAddress = (currentOwner || post.authorAddress) as Address
   const canEdit = address && ownerAddress.toLowerCase() === address.toLowerCase()
 
-  const handleDelete = async () => {
-    if (!showDeleteConfirm) {
-      setShowDeleteConfirm(true)
-      return
-    }
-
-    setIsDeleting(true)
+  const handlePostDelete = async () => {
     try {
       await fetch(`/api/posts/${post.id}`, {
         method: 'DELETE',
@@ -66,6 +65,53 @@ export function Post({
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
+    }
+  }
+
+  // Handle NFT burn after transaction success
+  useEffect(() => {
+    if (isBurnSuccess && post.tokenId) {
+      // After NFT is burned, delete the post
+      handlePostDelete()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBurnSuccess, post.tokenId])
+
+  const handleDelete = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true)
+      return
+    }
+
+    setIsDeleting(true)
+
+    // If post has an NFT, burn it first
+    if (post.tokenId && post.mintStatus === 'success') {
+      try {
+        writeContract(
+          {
+            address: contractAddress,
+            abi: contractABI,
+            functionName: 'burn',
+            args: [BigInt(post.tokenId)],
+          },
+          {
+            onError: (error) => {
+              console.error('Burn error:', error)
+              setIsDeleting(false)
+              setShowDeleteConfirm(false)
+              alert('Failed to burn NFT. Please try again.')
+            },
+          }
+        )
+      } catch (error) {
+        console.error('Burn error:', error)
+        setIsDeleting(false)
+        setShowDeleteConfirm(false)
+      }
+    } else {
+      // No NFT to burn, just delete the post
+      await handlePostDelete()
     }
   }
 
@@ -108,9 +154,16 @@ export function Post({
     ? getBaseExplorerUrl(chainId, contractAddress, post.tokenId)
     : null
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const dateStr = date.toLocaleDateString()
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return `${dateStr} ${timeStr}`
+  }
+
   return (
-    <div className="mb-4 relative">
-      <article className="pixel-card bg-white" style={{ paddingBottom: '45px' }}>
+    <div className="mb-4">
+      <article className="pixel-card bg-white">
         <div className="flex items-start justify-between mb-2">
           <AvatarName address={ownerAddress} onClick={handleProfileClick} />
           <div className="flex items-center gap-2">
@@ -170,52 +223,52 @@ export function Post({
             <p className="mb-2 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
 
             <div className="flex items-center justify-between">
-              {canEdit && (
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                {canEdit && (
+                  <>
+                    <button
+                      onClick={handleEditClick}
+                      className="text-xs pixel-button px-2 py-1"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting || isBurning}
+                      className="text-xs pixel-button bg-red-600 disabled:opacity-50 px-2 py-1"
+                    >
+                      {isBurning ? 'Burning...' : showDeleteConfirm ? 'Confirm?' : 'Delete'}
+                    </button>
+                  </>
+                )}
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={handleEditClick}
-                    className="text-xs pixel-button px-2 py-1"
+                    onClick={() => onReaction(post.id, 'like')}
+                    className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+                      userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+                    }`}
                   >
-                    Edit
+                    <span className="text-sm">▲</span>
+                    <span>{post.likes}</span>
                   </button>
                   <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="text-xs pixel-button bg-red-600 disabled:opacity-50 px-2 py-1"
+                    onClick={() => onReaction(post.id, 'dislike')}
+                    className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+                      userReaction === 'dislike' ? 'bg-red-600' : ''
+                    }`}
                   >
-                    {showDeleteConfirm ? 'Confirm?' : 'Delete'}
+                    <span className="text-sm">▼</span>
+                    <span>{post.dislikes}</span>
                   </button>
                 </div>
-              )}
+              </div>
               <div className="text-[10px] text-gray-500 text-right">
-                {new Date(post.createdAt).toLocaleString()}
+                {formatDateTime(post.createdAt)}
               </div>
             </div>
           </>
         )}
       </article>
-      
-      {/* Кнопки рейтинга вне рамки, в правом нижнем углу */}
-      <div className="absolute bottom-0 right-0 flex items-center gap-1">
-        <button
-          onClick={() => onReaction(post.id, 'like')}
-          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-            userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
-          }`}
-        >
-          <span className="text-sm">▲</span>
-          <span>{post.likes}</span>
-        </button>
-        <button
-          onClick={() => onReaction(post.id, 'dislike')}
-          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-            userReaction === 'dislike' ? 'bg-red-600' : ''
-          }`}
-        >
-          <span className="text-sm">▼</span>
-          <span>{post.dislikes}</span>
-        </button>
-      </div>
     </div>
   )
 }
