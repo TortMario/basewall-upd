@@ -106,24 +106,24 @@ export function Post({
       <p className="mb-3 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => onReaction(post.id, 'like')}
-            className={`flex items-center gap-1 text-xs pixel-button ${
-              userReaction === 'like' ? 'bg-pixel-yellow' : ''
+            className={`flex items-center gap-2 text-sm pixel-button px-4 py-2 ${
+              userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
             }`}
           >
-            <span>▲</span>
-            <span>{post.likes}</span>
+            <span className="text-lg">▲</span>
+            <span className="font-bold">{post.likes}</span>
           </button>
           <button
             onClick={() => onReaction(post.id, 'dislike')}
-            className={`flex items-center gap-1 text-xs pixel-button ${
+            className={`flex items-center gap-2 text-sm pixel-button px-4 py-2 ${
               userReaction === 'dislike' ? 'bg-red-600' : ''
             }`}
           >
-            <span>▼</span>
-            <span>{post.dislikes}</span>
+            <span className="text-lg">▼</span>
+            <span className="font-bold">{post.dislikes}</span>
           </button>
         </div>
 
@@ -146,7 +146,7 @@ export function Post({
         )}
       </div>
 
-      <div className="mt-2 text-[10px] text-gray-500">
+      <div className="mt-2 text-[10px] text-gray-500 text-right">
         {new Date(post.createdAt).toLocaleString()}
       </div>
     </article>

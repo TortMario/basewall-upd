@@ -179,8 +179,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
               transform: 'scale(0.625)',
               transformOrigin: 'left top',
               width: '160%',
-              minHeight: '48px', // 60px * 0.8 = 48px (уменьшено на 20%)
-              maxHeight: '96px', // 120px * 0.8 = 96px
+              minHeight: '80px', // Увеличено
+              maxHeight: '160px', // Увеличено
             }}
           />
           <div className="flex items-center justify-between">
