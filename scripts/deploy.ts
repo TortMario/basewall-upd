@@ -1,4 +1,5 @@
-import { ethers } from "hardhat";
+import hre from "hardhat";
+const { ethers } = hre;
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -15,9 +16,14 @@ async function main() {
   const network = await ethers.provider.getNetwork();
   console.log("  Network:", network.name, "(Chain ID:", network.chainId.toString() + ")");
   
-  if (balance === 0n) {
-    console.error("\n❌ ERROR: Deployer account has no balance!");
-    console.error("   Please fund your account with ETH before deploying.");
+  const minBalance = ethers.parseEther("0.002"); // Minimum 0.002 ETH for deployment
+  if (balance < minBalance) {
+    console.error("\n❌ ERROR: Insufficient balance!");
+    console.error(`   Current balance: ${ethers.formatEther(balance)} ETH`);
+    console.error(`   Required: ~0.002 ETH`);
+    console.error("\n   Please get more test ETH from:");
+    console.error("   https://www.coinbase.com/faucets/base-ethereum-goerli-faucet");
+    console.error("\n   Enter your address:", deployer.address);
     process.exit(1);
   }
 
