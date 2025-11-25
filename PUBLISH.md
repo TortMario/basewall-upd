@@ -30,7 +30,7 @@
 
 ## Шаг 2: Обновление манифеста
 
-Манифест находится в `app/.well-known/farcaster.json`. Убедитесь, что все URL указывают на ваш домен:
+Манифест находится в `public/.well-known/farcaster.json` (файлы из `public/` автоматически доступны по корневому пути). Убедитесь, что все URL указывают на ваш домен:
 
 ```json
 {
@@ -61,7 +61,7 @@
    - `payload`
    - `signature`
 
-7. Вставьте их в файл `app/.well-known/farcaster.json`:
+7. Вставьте их в файл `public/.well-known/farcaster.json`:
 
 ```json
 {
@@ -78,7 +78,7 @@
 Если вы используете Base Build для управления приложением:
 
 1. Укажите адрес кошелька, который использовался при импорте Mini App в Base Build
-2. Добавьте в `app/.well-known/farcaster.json`:
+2. Добавьте в `public/.well-known/farcaster.json`:
 
 ```json
 {
