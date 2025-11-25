@@ -1,22 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+import { useState, useEffect, useCallback } from 'react'
+import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { contractABI, contractAddress } from '@/lib/onchain'
 import { Address } from 'viem'
 import { base, baseSepolia } from 'wagmi/chains'
 import { sdk } from '@farcaster/miniapp-sdk'
-
-// Extend Window interface for ethereum
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>
-      isMetaMask?: boolean
-    }
-  }
-}
 
 interface ComposerProps {
   onPostCreated: () => void
@@ -29,6 +19,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
+  const { data: walletClient } = useWalletClient()
   const { writeContract, data: hash, error: writeError, isPending: isWriting } = useWriteContract()
   const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({
     hash,
@@ -57,9 +48,10 @@ export function Composer({ onPostCreated }: ComposerProps) {
       return
     }
 
-    // Check if window.ethereum is available (for Base App)
-    if (typeof window !== 'undefined' && !window.ethereum) {
-      console.error('window.ethereum not available')
+    // Check if wallet is available (for Base App)
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
+    if (!ethereum && !walletClient) {
+      console.error('Wallet provider not available')
       alert('Wallet provider not found. Please use Base App or install a wallet extension.')
       return
     }
@@ -212,8 +204,9 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [directTxHash, setDirectTxHash] = useState<`0x${string}` | null>(null)
 
   // Fallback: Direct ethereum transaction via window.ethereum
-  const mintViaDirectCall = async (to: Address, tokenURI: string): Promise<string> => {
-    if (typeof window === 'undefined' || !window.ethereum) {
+  const mintViaDirectCall = useCallback(async (to: Address, tokenURI: string): Promise<string> => {
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
+    if (!ethereum) {
       throw new Error('Ethereum provider not available')
     }
 
@@ -231,7 +224,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
     console.log('Encoded function data:', data)
 
     // Get current chain ID
-    const currentChainId = await window.ethereum.request({ method: 'eth_chainId' }) as string
+    const currentChainId = await ethereum.request({ method: 'eth_chainId' }) as string
     console.log('Current chain ID from ethereum:', currentChainId)
     
     // Ensure we're on the correct chain
@@ -239,7 +232,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
     if (currentChainId !== targetChainIdHex) {
       console.log('Switching chain via ethereum provider...')
       try {
-        await window.ethereum.request({
+        await ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: targetChainIdHex }],
         })
@@ -248,7 +241,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
       } catch (switchError: any) {
         if (switchError.code === 4902) {
           // Chain not added, try to add it
-          await window.ethereum.request({
+          await ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: targetChainIdHex,
@@ -269,7 +262,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
     }
 
     // Send transaction
-    const txHash = await window.ethereum.request({
+    const txHash = await ethereum.request({
       method: 'eth_sendTransaction',
       params: [{
         from: address,
@@ -280,7 +273,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
     console.log('Transaction sent via direct call, hash:', txHash)
     return txHash
-  }
+  }, [address, contractAddress, contractABI, targetChain, rpcUrl])
 
   // Monitor when writeContract is actually called and hash is generated
   useEffect(() => {
@@ -310,10 +303,10 @@ export function Composer({ onPostCreated }: ComposerProps) {
       
       processDirectTx()
     }
-  }, [directTxHash, pendingPostId, mintStatus, isMainnet])
+  }, [directTxHash, pendingPostId, mintStatus, processTransactionSuccess])
 
   // Helper function to process transaction success
-  const processTransactionSuccess = async (txHash: `0x${string}`, postId: string) => {
+  const processTransactionSuccess = useCallback(async (txHash: `0x${string}`, postId: string) => {
     try {
       console.log('Processing transaction success for hash:', txHash)
       const { createPublicClient, http, parseEventLogs } = await import('viem')
@@ -379,12 +372,12 @@ export function Composer({ onPostCreated }: ComposerProps) {
       setIsSubmitting(false)
       setPendingPostId(null)
       onPostCreated()
-      setTimeout(() => setMintStatus('idle'), 2000)
+      setTimeout(() =>       setMintStatus('idle'), 2000)
     } catch (error) {
       console.error('Failed to process transaction success:', error)
       throw error
     }
-  }
+  }, [isMainnet, onPostCreated])
 
   // Handle write errors
   useEffect(() => {

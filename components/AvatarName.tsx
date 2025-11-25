@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Address } from 'viem'
 
 interface Author {
@@ -27,10 +28,13 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
     >
       <div className="pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 w-10 h-10 flex items-center justify-center">
         {pfp ? (
-          <img 
+          <Image 
             src={pfp}
             alt={displayName || 'Avatar'}
+            width={40}
+            height={40}
             className="w-full h-full object-cover"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs">
