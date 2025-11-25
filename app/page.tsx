@@ -22,9 +22,14 @@ function ConnectWalletButton() {
 }
 
 export default function Home() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected, connector } = useAccount()
   const [editingPost, setEditingPost] = useState<PostType | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+
+  // Log connection status for debugging
+  useEffect(() => {
+    console.log('Wallet connection status:', { isConnected, address, connector: connector?.name })
+  }, [isConnected, address, connector])
 
   const handlePostCreated = () => {
     setRefreshKey((prev) => prev + 1)
