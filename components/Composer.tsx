@@ -8,6 +8,16 @@ import { Address } from 'viem'
 import { base, baseSepolia } from 'wagmi/chains'
 import { sdk } from '@farcaster/miniapp-sdk'
 
+// Extend Window interface for ethereum
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>
+      isMetaMask?: boolean
+    }
+  }
+}
+
 interface ComposerProps {
   onPostCreated: () => void
 }
@@ -37,18 +47,31 @@ export function Composer({ onPostCreated }: ComposerProps) {
     if (e) e.preventDefault()
     if (!text.trim() || !address || text.length > 280) return
 
+    console.log('=== Starting post creation ===')
+    console.log('Wallet status:', { isConnected, address, chainId, isCorrectChain })
+
     // Check wallet connection
     if (!isConnected || !address) {
+      console.error('Wallet not connected:', { isConnected, address })
       alert('Please connect your wallet first')
+      return
+    }
+
+    // Check if window.ethereum is available (for Base App)
+    if (typeof window !== 'undefined' && !window.ethereum) {
+      console.error('window.ethereum not available')
+      alert('Wallet provider not found. Please use Base App or install a wallet extension.')
       return
     }
 
     // Check if we're on the correct network
     if (!isCorrectChain && switchChain) {
+      console.log('Switching chain to:', targetChain.name, targetChain.id)
       try {
         await switchChain({ chainId: targetChain.id })
         // Wait a bit for chain switch
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        console.log('Chain switch completed')
       } catch (error) {
         console.error('Failed to switch chain:', error)
         alert(`Please switch to ${targetChain.name} network`)
@@ -126,26 +149,54 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error(`Please switch to ${targetChain.name} network`)
       }
 
-      // Mint NFT - in wagmi v2, writeContract is called directly
-      console.log('Minting NFT with:', { contractAddress, address, metadataUri, chainId })
+      // Mint NFT - try wagmi first, fallback to direct ethereum call
+      console.log('=== Starting NFT mint ===')
+      console.log('Minting NFT with:', { 
+        contractAddress, 
+        address, 
+        metadataUri, 
+        chainId,
+        contractABI: contractABI ? 'loaded' : 'missing'
+      })
       
       // Ensure contract address is valid
       if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
         throw new Error('Invalid contract address')
       }
 
-      // Call writeContract - this will trigger the transaction
+      // Try wagmi writeContract first
       try {
+        console.log('Attempting to call writeContract via wagmi...')
         writeContract({
           address: contractAddress,
           abi: contractABI,
           functionName: 'mintTo',
           args: [address as Address, metadataUri],
         })
-        console.log('writeContract called successfully')
+        console.log('writeContract called successfully, waiting for hash...')
+        
+        // Wait a bit to see if hash is generated (wagmi is async)
+        let attempts = 0
+        while (!hash && attempts < 10) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          attempts++
+        }
+        
+        if (!hash) {
+          console.warn('No transaction hash from wagmi after 5 seconds, trying direct ethereum call...')
+          const directHash = await mintViaDirectCall(address, metadataUri)
+          setDirectTxHash(directHash as `0x${string}`)
+        }
       } catch (error) {
         console.error('Error calling writeContract:', error)
-        throw error
+        console.log('Falling back to direct ethereum call...')
+        try {
+          const directHash = await mintViaDirectCall(address, metadataUri)
+          setDirectTxHash(directHash as `0x${string}`)
+        } catch (fallbackError) {
+          console.error('Both wagmi and direct call failed:', fallbackError)
+          throw fallbackError
+        }
       }
     } catch (error) {
       console.error('Post creation error:', error)
@@ -157,14 +208,183 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   // Store postId for updating after mint
   const [pendingPostId, setPendingPostId] = useState<string | null>(null)
+  // Store direct transaction hash (for fallback method)
+  const [directTxHash, setDirectTxHash] = useState<`0x${string}` | null>(null)
+
+  // Fallback: Direct ethereum transaction via window.ethereum
+  const mintViaDirectCall = async (to: Address, tokenURI: string): Promise<string> => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error('Ethereum provider not available')
+    }
+
+    console.log('Using direct ethereum call for minting...')
+    
+    const { encodeFunctionData } = await import('viem')
+    
+    // Encode the function call
+    const data = encodeFunctionData({
+      abi: contractABI,
+      functionName: 'mintTo',
+      args: [to, tokenURI],
+    })
+
+    console.log('Encoded function data:', data)
+
+    // Get current chain ID
+    const currentChainId = await window.ethereum.request({ method: 'eth_chainId' }) as string
+    console.log('Current chain ID from ethereum:', currentChainId)
+    
+    // Ensure we're on the correct chain
+    const targetChainIdHex = `0x${targetChain.id.toString(16)}`
+    if (currentChainId !== targetChainIdHex) {
+      console.log('Switching chain via ethereum provider...')
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: targetChainIdHex }],
+        })
+        // Wait for chain switch
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          // Chain not added, try to add it
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: targetChainIdHex,
+              chainName: targetChain.name,
+              nativeCurrency: {
+                name: 'Ether',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: [rpcUrl],
+              blockExplorerUrls: [targetChain.blockExplorers?.default?.url || 'https://basescan.org'],
+            }],
+          })
+        } else {
+          throw switchError
+        }
+      }
+    }
+
+    // Send transaction
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: address,
+        to: contractAddress,
+        data: data,
+      }],
+    }) as string
+
+    console.log('Transaction sent via direct call, hash:', txHash)
+    return txHash
+  }
 
   // Monitor when writeContract is actually called and hash is generated
   useEffect(() => {
     if (hash && mintStatus === 'minting') {
-      console.log('Transaction hash received:', hash)
+      console.log('Transaction hash received from wagmi:', hash)
       setMintStatus('minting') // Ensure status is still minting
     }
   }, [hash, mintStatus])
+
+  // Handle direct ethereum transactions (fallback method)
+  useEffect(() => {
+    if (directTxHash && pendingPostId && mintStatus === 'minting') {
+      console.log('Processing direct ethereum transaction:', directTxHash)
+      
+      const processDirectTx = async () => {
+        try {
+          await processTransactionSuccess(directTxHash, pendingPostId)
+          setDirectTxHash(null) // Clear after processing
+        } catch (error) {
+          console.error('Failed to process direct transaction:', error)
+          setMintStatus('error')
+          setIsSubmitting(false)
+          setPendingPostId(null)
+          setDirectTxHash(null)
+        }
+      }
+      
+      processDirectTx()
+    }
+  }, [directTxHash, pendingPostId, mintStatus, isMainnet])
+
+  // Helper function to process transaction success
+  const processTransactionSuccess = async (txHash: `0x${string}`, postId: string) => {
+    try {
+      console.log('Processing transaction success for hash:', txHash)
+      const { createPublicClient, http, parseEventLogs } = await import('viem')
+      const { base, baseSepolia } = await import('wagmi/chains')
+      const { contractAddress, contractABI } = await import('@/lib/onchain')
+      
+      // Determine network from RPC URL
+      const rpcUrl = typeof window !== 'undefined'
+        ? (process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org')
+        : 'https://mainnet.base.org'
+      const isMainnetCheck = !rpcUrl.includes('sepolia')
+      const chain = isMainnetCheck ? base : baseSepolia
+      
+      const client = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+      })
+
+      const receipt = await client.getTransactionReceipt({ hash: txHash })
+      console.log('Transaction receipt received:', receipt)
+      
+      // Extract tokenId (same logic as before)
+      let tokenId: number | null = null
+      try {
+        const parsed = parseEventLogs({
+          abi: contractABI,
+          logs: receipt.logs,
+          eventName: 'Transfer',
+        })
+        if (parsed.length > 0 && parsed[0].args.tokenId) {
+          tokenId = Number(parsed[0].args.tokenId)
+        }
+      } catch (e) {
+        console.warn('Event parsing failed, using fallback:', e)
+      }
+
+      if (!tokenId) {
+        const nextId = await client.readContract({
+          address: contractAddress,
+          abi: contractABI,
+          functionName: 'nextTokenId',
+        })
+        tokenId = Number(nextId) - 1
+      }
+
+      if (!tokenId || tokenId < 1) {
+        throw new Error('Failed to extract valid tokenId from transaction')
+      }
+
+      // Update post
+      const updateResponse = await fetch(`/api/posts/${postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mintStatus: 'success', tokenId }),
+      })
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update post with tokenId')
+      }
+
+      setMintStatus('success')
+      setText('')
+      setIsSubmitting(false)
+      setPendingPostId(null)
+      onPostCreated()
+      setTimeout(() => setMintStatus('idle'), 2000)
+    } catch (error) {
+      console.error('Failed to process transaction success:', error)
+      throw error
+    }
+  }
 
   // Handle write errors
   useEffect(() => {
