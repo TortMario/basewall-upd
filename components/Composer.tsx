@@ -203,109 +203,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
   // Store direct transaction hash (for fallback method)
   const [directTxHash, setDirectTxHash] = useState<`0x${string}` | null>(null)
 
-  // Fallback: Direct ethereum transaction via window.ethereum
-  const mintViaDirectCall = useCallback(async (to: Address, tokenURI: string): Promise<string> => {
-    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
-    if (!ethereum) {
-      throw new Error('Ethereum provider not available')
-    }
-
-    console.log('Using direct ethereum call for minting...')
-    
-    const { encodeFunctionData } = await import('viem')
-    
-    // Encode the function call
-    const data = encodeFunctionData({
-      abi: contractABI,
-      functionName: 'mintTo',
-      args: [to, tokenURI],
-    })
-
-    console.log('Encoded function data:', data)
-
-    // Get current chain ID
-    const currentChainId = await ethereum.request({ method: 'eth_chainId' }) as string
-    console.log('Current chain ID from ethereum:', currentChainId)
-    
-    // Ensure we're on the correct chain
-    const targetChainIdHex = `0x${targetChain.id.toString(16)}`
-    if (currentChainId !== targetChainIdHex) {
-      console.log('Switching chain via ethereum provider...')
-      try {
-        await ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainIdHex }],
-        })
-        // Wait for chain switch
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          // Chain not added, try to add it
-          await ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: targetChainIdHex,
-              chainName: targetChain.name,
-              nativeCurrency: {
-                name: 'Ether',
-                symbol: 'ETH',
-                decimals: 18,
-              },
-              rpcUrls: [rpcUrl],
-              blockExplorerUrls: [targetChain.blockExplorers?.default?.url || 'https://basescan.org'],
-            }],
-          })
-        } else {
-          throw switchError
-        }
-      }
-    }
-
-    // Send transaction
-    const txHash = await ethereum.request({
-      method: 'eth_sendTransaction',
-      params: [{
-        from: address,
-        to: contractAddress,
-        data: data,
-      }],
-    }) as string
-
-    console.log('Transaction sent via direct call, hash:', txHash)
-    return txHash
-  }, [address, contractAddress, contractABI, targetChain, rpcUrl])
-
-  // Monitor when writeContract is actually called and hash is generated
-  useEffect(() => {
-    if (hash && mintStatus === 'minting') {
-      console.log('Transaction hash received from wagmi:', hash)
-      setMintStatus('minting') // Ensure status is still minting
-    }
-  }, [hash, mintStatus])
-
-  // Handle direct ethereum transactions (fallback method)
-  useEffect(() => {
-    if (directTxHash && pendingPostId && mintStatus === 'minting') {
-      console.log('Processing direct ethereum transaction:', directTxHash)
-      
-      const processDirectTx = async () => {
-        try {
-          await processTransactionSuccess(directTxHash, pendingPostId)
-          setDirectTxHash(null) // Clear after processing
-        } catch (error) {
-          console.error('Failed to process direct transaction:', error)
-          setMintStatus('error')
-          setIsSubmitting(false)
-          setPendingPostId(null)
-          setDirectTxHash(null)
-        }
-      }
-      
-      processDirectTx()
-    }
-  }, [directTxHash, pendingPostId, mintStatus, processTransactionSuccess])
-
-  // Helper function to process transaction success
+  // Helper function to process transaction success (declared early for use in useEffect)
   const processTransactionSuccess = useCallback(async (txHash: `0x${string}`, postId: string) => {
     try {
       console.log('Processing transaction success for hash:', txHash)
@@ -372,12 +270,115 @@ export function Composer({ onPostCreated }: ComposerProps) {
       setIsSubmitting(false)
       setPendingPostId(null)
       onPostCreated()
-      setTimeout(() =>       setMintStatus('idle'), 2000)
+      setTimeout(() => setMintStatus('idle'), 2000)
     } catch (error) {
       console.error('Failed to process transaction success:', error)
       throw error
     }
-  }, [isMainnet, onPostCreated])
+  }, [onPostCreated])
+
+  // Fallback: Direct ethereum transaction via window.ethereum
+  const mintViaDirectCall = useCallback(async (to: Address, tokenURI: string): Promise<string> => {
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
+    if (!ethereum) {
+      throw new Error('Ethereum provider not available')
+    }
+
+    console.log('Using direct ethereum call for minting...')
+    
+    const { encodeFunctionData } = await import('viem')
+    const { contractABI, contractAddress } = await import('@/lib/onchain')
+    
+    // Encode the function call
+    const data = encodeFunctionData({
+      abi: contractABI,
+      functionName: 'mintTo',
+      args: [to, tokenURI],
+    })
+
+    console.log('Encoded function data:', data)
+
+    // Get current chain ID
+    const currentChainId = await ethereum.request({ method: 'eth_chainId' }) as string
+    console.log('Current chain ID from ethereum:', currentChainId)
+    
+    // Ensure we're on the correct chain
+    const targetChainIdHex = `0x${targetChain.id.toString(16)}`
+    if (currentChainId !== targetChainIdHex) {
+      console.log('Switching chain via ethereum provider...')
+      try {
+        await ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: targetChainIdHex }],
+        })
+        // Wait for chain switch
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          // Chain not added, try to add it
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: targetChainIdHex,
+              chainName: targetChain.name,
+              nativeCurrency: {
+                name: 'Ether',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: [rpcUrl],
+              blockExplorerUrls: [targetChain.blockExplorers?.default?.url || 'https://basescan.org'],
+            }],
+          })
+        } else {
+          throw switchError
+        }
+      }
+    }
+
+    // Send transaction
+    const txHash = await ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: address,
+        to: contractAddress,
+        data: data,
+      }],
+    }) as string
+
+    console.log('Transaction sent via direct call, hash:', txHash)
+    return txHash
+  }, [address, targetChain, rpcUrl])
+
+  // Monitor when writeContract is actually called and hash is generated
+  useEffect(() => {
+    if (hash && mintStatus === 'minting') {
+      console.log('Transaction hash received from wagmi:', hash)
+      setMintStatus('minting') // Ensure status is still minting
+    }
+  }, [hash, mintStatus])
+
+  // Handle direct ethereum transactions (fallback method)
+  useEffect(() => {
+    if (directTxHash && pendingPostId && mintStatus === 'minting') {
+      console.log('Processing direct ethereum transaction:', directTxHash)
+      
+      const processDirectTx = async () => {
+        try {
+          await processTransactionSuccess(directTxHash, pendingPostId)
+          setDirectTxHash(null) // Clear after processing
+        } catch (error) {
+          console.error('Failed to process direct transaction:', error)
+          setMintStatus('error')
+          setIsSubmitting(false)
+          setPendingPostId(null)
+          setDirectTxHash(null)
+        }
+      }
+      
+      processDirectTx()
+    }
+  }, [directTxHash, pendingPostId, mintStatus, processTransactionSuccess])
 
   // Handle write errors
   useEffect(() => {
