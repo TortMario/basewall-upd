@@ -18,12 +18,12 @@ contract OneStreamNFT is ERC721, ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Mint NFT - only owner can mint
+     * @dev Mint NFT - public minting function
      * @param to Address to mint NFT to
      * @param tokenURI URI for the token metadata (will be appended to baseURI)
      * @return tokenId The ID of the minted token
      */
-    function mintTo(address to, string calldata tokenURI) external onlyOwner returns (uint256) {
+    function mintTo(address to, string calldata tokenURI) external returns (uint256) {
         uint256 id = nextTokenId;
         nextTokenId++;
         
