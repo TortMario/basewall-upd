@@ -61,7 +61,14 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white p-4 max-w-2xl mx-auto">
       <header className="mb-6 text-center">
-        <h1 className="text-4xl font-pixel text-blue-800 mb-2">The Wall Base</h1>
+        <a 
+          href="https://base.app/profile/mynameisthe" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-block hover:opacity-80 transition-opacity"
+        >
+          <h1 className="text-4xl font-pixel text-blue-800 mb-2 cursor-pointer">The Wall Base</h1>
+        </a>
         <p className="text-xs text-gray-400">NFT Social Feed on Base</p>
       </header>
 
