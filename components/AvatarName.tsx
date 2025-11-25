@@ -39,7 +39,7 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
         )}
       </div>
       {displayName && (
-        <span className="text-xs text-black">{displayName}</span>
+        <span className="text-sm text-black font-semibold">{displayName}</span>
       )}
     </div>
   )

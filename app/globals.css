@@ -5,7 +5,7 @@
 
 :root {
   --pixel-dark: #0f172a;
-  --pixel-purple: #7f5af0;
+  --pixel-purple: #3b82f6;
   --pixel-yellow: #ffcc00;
   --pixel-teal: #00d1b2;
   --pixel-bg: #1e293b;
@@ -107,7 +107,7 @@ textarea {
 }
 
 .pixel-button:hover {
-  @apply bg-purple-600;
+  @apply bg-blue-600;
 }
 
 .pixel-input {
