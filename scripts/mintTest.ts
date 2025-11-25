@@ -45,7 +45,7 @@ async function main() {
     const receipt = await tx.wait();
     console.log("  ✅ Transaction confirmed in block:", receipt?.blockNumber);
 
-    // Get the minted token ID (should be nextTokenId - 1)
+    // Get the minted token ID (should be nextTokenId - 1, since nextTokenId was incremented)
     const newNextTokenId = await contract.nextTokenId();
     const mintedTokenId = newNextTokenId - 1n;
     
@@ -54,16 +54,27 @@ async function main() {
     console.log("=".repeat(60));
     console.log("\n📍 Minted Token ID:", mintedTokenId.toString());
     console.log("  Owner:", owner.address);
-    console.log("  Token URI:", await contract.tokenURI(mintedTokenId));
     
-    // Verify ownership
-    const tokenOwner = await contract.ownerOf(mintedTokenId);
-    console.log("  Verified owner:", tokenOwner);
-    
-    if (tokenOwner.toLowerCase() === owner.address.toLowerCase()) {
-      console.log("  ✅ Ownership verified!");
-    } else {
-      console.log("  ❌ Ownership mismatch!");
+    // Verify ownership first
+    try {
+      const tokenOwner = await contract.ownerOf(mintedTokenId);
+      console.log("  Verified owner:", tokenOwner);
+      
+      if (tokenOwner.toLowerCase() === owner.address.toLowerCase()) {
+        console.log("  ✅ Ownership verified!");
+      } else {
+        console.log("  ❌ Ownership mismatch!");
+      }
+      
+      // Get token URI (may fail if baseURI is not set properly)
+      try {
+        const fullTokenURI = await contract.tokenURI(mintedTokenId);
+        console.log("  Token URI:", fullTokenURI);
+      } catch (uriError: any) {
+        console.log("  ⚠️  Token URI not available (baseURI may need to be set)");
+      }
+    } catch (error: any) {
+      console.error("  ❌ Error verifying token:", error.message);
     }
 
     console.log("\n📋 View on BaseScan:");
