@@ -123,7 +123,11 @@ export function Post({
     setEditText(post.text)
   }
 
-  const handleEditSave = async () => {
+  const handleEditSave = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     try {
       await fetch(`/api/posts/${post.id}`, {
         method: 'PATCH',
@@ -134,6 +138,10 @@ export function Post({
       })
       setIsEditing(false)
       onEdit({ ...post, text: editText })
+      // Prevent focus from jumping to Composer
+      if (e && e.currentTarget instanceof HTMLElement) {
+        e.currentTarget.blur()
+      }
     } catch (error) {
       console.error('Edit error:', error)
     }
@@ -156,36 +164,24 @@ export function Post({
   }
 
   return (
-    <div className="mb-4 relative">
-      <article className="pixel-card bg-white">
-        <div className="flex items-start justify-between mb-2">
-          <AvatarName 
-            address={ownerAddress} 
-            author={author}
-            onClick={handleProfileClick} 
-          />
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-[10px] text-gray-500 text-right">
-              {formatDateTime(post.createdAt)}
-            </div>
-            {post.mintStatus === 'pending' && (
-              <span className="text-xs text-pixel-yellow">Minting...</span>
-            )}
-            {post.mintStatus === 'success' && post.tokenId && (
-              <a
-                href={explorerUrl || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-pixel-teal hover:underline"
-              >
-                #{post.tokenId}
-              </a>
-            )}
-            {post.mintStatus === 'failed' && (
-              <span className="text-xs text-red-500">Mint failed</span>
-            )}
-          </div>
+    <div className="mb-6 relative">
+      {/* Avatar and name outside the card, like comic style */}
+      <div className="flex items-center gap-2 mb-2">
+        <AvatarName 
+          address={ownerAddress} 
+          author={author}
+          onClick={handleProfileClick} 
+        />
+        <div className="text-[10px] text-gray-500">
+          {formatDateTime(post.createdAt)}
         </div>
+      </div>
+      
+      {/* Speech bubble pointing to avatar */}
+      <article className="pixel-card bg-white relative ml-12">
+        {/* Speech bubble tail pointing to avatar */}
+        <div className="absolute -left-3 top-4 w-0 h-0 border-t-[8px] border-t-transparent border-r-[12px] border-r-white border-b-[8px] border-b-transparent"></div>
+        <div className="absolute -left-4 top-4 w-0 h-0 border-t-[9px] border-t-transparent border-r-[13px] border-r-black border-b-[9px] border-b-transparent"></div>
 
         {isEditing ? (
           <div className="mb-2">
@@ -236,7 +232,9 @@ export function Post({
                     <button
                       onClick={handleDelete}
                       disabled={isDeleting || isBurning}
-                      className="text-xs pixel-button bg-red-600 disabled:opacity-50 px-2 py-1"
+                      className={`text-xs pixel-button disabled:opacity-50 px-2 py-1 ${
+                        showDeleteConfirm ? 'bg-red-700 text-white' : 'bg-red-600'
+                      }`}
                     >
                       {isBurning ? 'Burning...' : showDeleteConfirm ? 'Confirm?' : 'Delete'}
                     </button>
@@ -247,26 +245,49 @@ export function Post({
           </>
         )}
       </article>
-      {/* Rating buttons below the card, aligned to the right */}
-      <div className="flex items-center gap-1 justify-end mt-1">
-        <button
-          onClick={() => onReaction(post.id, 'like')}
-          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-            userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
-          }`}
-        >
-          <span className="text-sm">▲</span>
-          <span>{post.likes}</span>
-        </button>
-        <button
-          onClick={() => onReaction(post.id, 'dislike')}
-          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-            userReaction === 'dislike' ? 'bg-red-600' : ''
-          }`}
-        >
-          <span className="text-sm">▼</span>
-          <span>{post.dislikes}</span>
-        </button>
+      {/* Rating buttons and mint status below the card, aligned to the right */}
+      <div className="flex items-center gap-2 justify-end mt-1 ml-12">
+        {/* Mint status - only visible to author */}
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            {post.mintStatus === 'pending' && (
+              <span className="text-xs text-pixel-yellow">Minting...</span>
+            )}
+            {post.mintStatus === 'success' && post.tokenId && (
+              <a
+                href={explorerUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-pixel-teal hover:underline"
+              >
+                #{post.tokenId}
+              </a>
+            )}
+            {post.mintStatus === 'failed' && (
+              <span className="text-xs text-red-500">Mint failed</span>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onReaction(post.id, 'like')}
+            className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+              userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+            }`}
+          >
+            <span className="text-sm">▲</span>
+            <span>{post.likes}</span>
+          </button>
+          <button
+            onClick={() => onReaction(post.id, 'dislike')}
+            className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+              userReaction === 'dislike' ? 'bg-red-600' : ''
+            }`}
+          >
+            <span className="text-sm">▼</span>
+            <span>{post.dislikes}</span>
+          </button>
+        </div>
       </div>
     </div>
   )

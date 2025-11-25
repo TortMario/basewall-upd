@@ -121,7 +121,7 @@ textarea {
 }
 
 .scroll-button {
-  @apply fixed z-50 w-12 h-12 pixel-button rounded-full;
+  @apply w-12 h-12 pixel-button rounded-full;
   @apply flex items-center justify-center text-lg;
 }
 
