@@ -2,7 +2,7 @@
 
 import { createConfig, http } from 'wagmi'
 import { base, baseSepolia } from 'wagmi/chains'
-import { injected, metaMask, coinbaseWallet } from 'wagmi/connectors'
+import { injected } from 'wagmi/connectors'
 
 // Determine which network to use based on environment
 const isMainnet = !process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
@@ -22,7 +22,7 @@ const connectors = [
 
 // For Base App, the wallet is automatically injected
 // In production, use the Farcaster Mini App connector when available
-// Now supports multiple wallets: MetaMask, Coinbase Wallet, and injected wallets
+// Uses injected connector which works with Base App, MetaMask, Coinbase Wallet, and other browser extensions
 export const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   connectors,
