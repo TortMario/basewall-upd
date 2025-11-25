@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { contractABI, contractAddress } from '@/lib/onchain'
 import { Address } from 'viem'
+import { sdk } from '@farcaster/miniapp-sdk'
 
 interface ComposerProps {
   onPostCreated: () => void
@@ -28,26 +29,25 @@ export function Composer({ onPostCreated }: ComposerProps) {
     setMintStatus('creating')
 
     try {
-      // Get user data from Base App MiniKit SDK
+      // Get user data from Base App via Mini App SDK context
       let authorData = null
       try {
-        if (typeof window !== 'undefined' && (window as any).farcaster?.sdk) {
-          const sdk = (window as any).farcaster.sdk
-          const user = await sdk.actions.requestUser({
-            fields: ['fid', 'username', 'displayName', 'pfp', 'address'],
-          })
-          if (user) {
+        const isInMiniApp = await sdk.isInMiniApp()
+        if (isInMiniApp) {
+          const context = await sdk.context
+          if (context?.user) {
+            const user = context.user
             authorData = {
               fid: user.fid ?? null,
               username: user.username || null,
               displayName: user.displayName || null,
-              pfp: user.pfp && user.pfp.trim() !== '' ? user.pfp : null,
-              address: user.address || address,
+              pfp: user.pfpUrl && user.pfpUrl.trim() !== '' ? user.pfpUrl : null,
+              address: address, // Use address from wagmi useAccount
             }
           }
         }
       } catch (error) {
-        console.warn('Failed to get user data from MiniKit SDK:', error)
+        console.warn('Failed to get user data from Mini App SDK context:', error)
         // Continue without author data if SDK is not available
       }
 
