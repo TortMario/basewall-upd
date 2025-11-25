@@ -2,7 +2,7 @@
 
 import { createConfig, http } from 'wagmi'
 import { base, baseSepolia } from 'wagmi/chains'
-import { injected, metaMask, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { injected, metaMask, coinbaseWallet } from 'wagmi/connectors'
 
 // Determine which network to use based on environment
 const isMainnet = !process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
@@ -10,9 +10,6 @@ const defaultChain = isMainnet ? base : baseSepolia
 
 // Get RPC URL
 const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || (isMainnet ? 'https://mainnet.base.org' : 'https://sepolia.base.org')
-
-// WalletConnect project ID (optional - can be set via env var)
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || ''
 
 // Create connectors array with multiple wallet options
 const connectors = [
@@ -34,24 +31,9 @@ const connectors = [
   }),
 ]
 
-// Add WalletConnect if project ID is provided
-if (walletConnectProjectId) {
-  connectors.push(
-    walletConnect({
-      projectId: walletConnectProjectId,
-      metadata: {
-        name: 'The Wall Base',
-        description: 'NFT Social Feed on Base',
-        url: typeof window !== 'undefined' ? window.location.origin : '',
-        icons: [typeof window !== 'undefined' ? `${window.location.origin}/icon.png` : ''],
-      },
-    })
-  )
-}
-
 // For Base App, the wallet is automatically injected
 // In production, use the Farcaster Mini App connector when available
-// Now supports multiple wallets: MetaMask, Coinbase Wallet, WalletConnect, and injected wallets
+// Now supports multiple wallets: MetaMask, Coinbase Wallet, and injected wallets
 export const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   connectors,

@@ -38,7 +38,6 @@ function ConnectWalletButton() {
     if (name.includes('metamask')) return '🦊'
     if (name.includes('coinbase')) return '🔵'
     if (name.includes('brave')) return '🦁'
-    if (name.includes('walletconnect')) return '🔗'
     return '💼'
   }
 
