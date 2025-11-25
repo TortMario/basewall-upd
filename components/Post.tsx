@@ -6,6 +6,7 @@ import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { AvatarName } from './AvatarName'
 import { Address } from 'viem'
 import { getBaseExplorerUrl, contractAddress, contractABI } from '@/lib/onchain'
+import { sdk } from '@farcaster/miniapp-sdk'
 
 interface Author {
   fid?: number
@@ -103,12 +104,17 @@ export function Post({
     }
   }
 
-  const handleProfileClick = () => {
-    // Open profile in Base App
-    if (typeof window !== 'undefined' && (window as any).farcaster?.sdk) {
-      ;(window as any).farcaster.sdk.actions.openUrl(
-        `https://base.org/profile/${ownerAddress}`
-      )
+  const handleProfileClick = async () => {
+    try {
+      const isInMiniApp = await sdk.isInMiniApp()
+      if (isInMiniApp) {
+        await sdk.actions.openUrl(`https://base.org/profile/${ownerAddress}`)
+      } else {
+        window.open(`https://base.org/profile/${ownerAddress}`, '_blank')
+      }
+    } catch (error) {
+      console.warn('Failed to open profile URL:', error)
+      window.open(`https://base.org/profile/${ownerAddress}`, '_blank')
     }
   }
 
