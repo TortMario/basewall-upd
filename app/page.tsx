@@ -72,7 +72,7 @@ export default function Home() {
         <p className="text-xs text-gray-400">NFT Social Feed on Base</p>
       </header>
 
-      {isConnected && address && !editingPost && (
+      {isConnected && address && (
         <Composer onPostCreated={handlePostCreated} />
       )}
 

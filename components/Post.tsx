@@ -183,11 +183,13 @@ export function Post({
       </div>
       
       {/* Speech bubble pointing to avatar - positioned near name level */}
-      <article className="pixel-card bg-white relative ml-12 -mt-2">
-        {/* Date and time in top right corner */}
-        <div className="absolute top-2 right-2 text-[10px] text-gray-500 z-10">
-          {formatDateTime(post.createdAt)}
-        </div>
+      <article className="pixel-card bg-white relative ml-12 -mt-12">
+        {/* Date and time in top right corner - hidden during edit */}
+        {!isEditing && (
+          <div className="absolute top-2 right-2 text-[10px] text-gray-500 z-10">
+            {formatDateTime(post.createdAt)}
+          </div>
+        )}
         
         {/* Speech bubble tail pointing to bottom of avatar */}
         <div className="absolute -left-3 top-8 w-0 h-0 border-t-[8px] border-t-transparent border-r-[12px] border-r-white border-b-[8px] border-b-transparent"></div>
@@ -213,7 +215,7 @@ export function Post({
             <div className="flex gap-2">
               <button
                 onClick={handleEditSave}
-                className="text-xs pixel-button px-2 py-1"
+                className="text-xs pixel-button px-2 py-1 bg-blue-300 hover:bg-blue-400"
               >
                 Save
               </button>
@@ -235,7 +237,7 @@ export function Post({
                   <>
                     <button
                       onClick={handleEditClick}
-                      className="text-xs pixel-button px-2 py-1"
+                      className="text-xs pixel-button px-2 py-1 bg-blue-300 hover:bg-blue-400"
                     >
                       Edit
                     </button>
@@ -243,7 +245,7 @@ export function Post({
                       onClick={handleDelete}
                       disabled={isDeleting || isBurning}
                       className={`text-xs pixel-button disabled:opacity-50 px-2 py-1 ${
-                        showDeleteConfirm ? 'bg-red-700 text-white' : 'bg-red-600'
+                        showDeleteConfirm ? 'bg-red-800 text-white' : 'bg-blue-300 hover:bg-blue-400'
                       }`}
                     >
                       {isBurning ? 'Burning...' : showDeleteConfirm ? 'Confirm?' : 'Delete'}
@@ -282,7 +284,7 @@ export function Post({
           <button
             onClick={() => onReaction(post.id, 'like')}
             className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-              userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+              userReaction === 'like' ? 'bg-green-300 text-black' : 'bg-green-200 hover:bg-green-300'
             }`}
           >
             <span className="text-sm">▲</span>
@@ -291,7 +293,7 @@ export function Post({
           <button
             onClick={() => onReaction(post.id, 'dislike')}
             className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-              userReaction === 'dislike' ? 'bg-red-600' : ''
+              userReaction === 'dislike' ? 'bg-red-400' : 'bg-red-200 hover:bg-red-300'
             }`}
           >
             <span className="text-sm">▼</span>

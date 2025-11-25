@@ -22,14 +22,14 @@ export function ScrollButtons() {
     <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-50">
       <button
         onClick={scrollToTop}
-        className="scroll-button"
+        className="scroll-button bg-blue-500 opacity-20 hover:opacity-40"
         aria-label="Scroll to top"
       >
         ↑
       </button>
       <button
         onClick={scrollToBottom}
-        className="scroll-button"
+        className="scroll-button bg-blue-500 opacity-20 hover:opacity-40"
         aria-label="Scroll to bottom"
       >
         ↓

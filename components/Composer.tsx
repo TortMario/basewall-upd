@@ -344,7 +344,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
         type="button"
         onClick={() => handleSubmit()}
         disabled={!canSubmit}
-        className="pixel-button w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="pixel-button w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-300 hover:bg-blue-400"
       >
         {isSubmitting ? 'Publishing...' : 'Publish'}
       </button>
