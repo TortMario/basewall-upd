@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useConnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Composer } from '@/components/Composer'
 import { PostList } from '@/components/PostList'
 import { ScrollButtons } from '@/components/ScrollButtons'
@@ -125,6 +125,42 @@ function ConnectWalletButton() {
   )
 }
 
+function DisconnectWalletButton() {
+  const { disconnect, isPending } = useDisconnect()
+  const { address, connector } = useAccount()
+
+  const getWalletName = () => {
+    if (connector?.name) return connector.name
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
+    if (ethereum?.isMetaMask) return 'MetaMask'
+    if (ethereum?.isCoinbaseWallet) return 'Coinbase Wallet'
+    return 'Wallet'
+  }
+
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  }
+
+  return (
+    <div className="pixel-card mb-4 bg-white">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-600">Connected:</span>
+          <span className="text-xs font-mono text-blue-600">{formatAddress(address || '')}</span>
+          <span className="text-xs text-gray-500">({getWalletName()})</span>
+        </div>
+        <button
+          onClick={() => disconnect()}
+          disabled={isPending}
+          className="text-xs pixel-button bg-red-600 hover:bg-red-700 px-3 py-1"
+        >
+          {isPending ? 'Disconnecting...' : 'Disconnect'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const { address, isConnected, connector } = useAccount()
   const [editingPost, setEditingPost] = useState<PostType | null>(null)
@@ -177,7 +213,10 @@ export default function Home() {
       </header>
 
       {isConnected && address && (
-        <Composer onPostCreated={handlePostCreated} />
+        <>
+          <DisconnectWalletButton />
+          <Composer onPostCreated={handlePostCreated} />
+        </>
       )}
 
       {!isConnected && (
