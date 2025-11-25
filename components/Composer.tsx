@@ -127,9 +127,20 @@ export function Composer({ onPostCreated }: ComposerProps) {
       setPendingPostId(id)
       setMintStatus('minting')
 
-      // Validate contract address
+      // Validate contract address with detailed logging
+      console.log('🔍 Contract address check:', {
+        contractAddress,
+        envVar: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+        isValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000'
+      })
+      
       if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
-        throw new Error('Contract address not configured. Please set NEXT_PUBLIC_CONTRACT_ADDRESS in environment variables.')
+        console.error('❌ Contract address validation failed:', {
+          contractAddress,
+          envVar: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+          allEnvKeys: typeof window !== 'undefined' ? Object.keys(process.env).filter(k => k.includes('CONTRACT') || k.includes('BASE')) : []
+        })
+        throw new Error('Contract address not configured. Please set NEXT_PUBLIC_CONTRACT_ADDRESS in Vercel environment variables and redeploy the project.')
       }
 
       if (!contractABI) {

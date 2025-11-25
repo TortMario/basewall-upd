@@ -9,6 +9,11 @@ const nextConfig = {
       bodySizeLimit: '1mb',
     },
   },
+  // Explicitly expose environment variables to client
+  env: {
+    NEXT_PUBLIC_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+    NEXT_PUBLIC_BASE_RPC_URL: process.env.NEXT_PUBLIC_BASE_RPC_URL,
+  },
   webpack: (config, { isServer }) => {
     // Suppress warnings for optional dependencies
     if (!isServer) {
