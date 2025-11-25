@@ -1,9 +1,4 @@
 {
-  "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
-  },
   "baseBuilder": {
     "ownerAddress": "0xf1A98A5E238Af4eEA970E3b02973Cf6f4F1741Ac"
   },
