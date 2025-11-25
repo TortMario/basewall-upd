@@ -174,7 +174,7 @@ export function Post({
   return (
     <div className="mb-6 relative">
       {/* Avatar and name outside the card, like comic style */}
-      <div className="flex items-start gap-2 mb-2">
+      <div className="flex items-start gap-2">
         <AvatarName 
           address={ownerAddress} 
           author={author}
@@ -182,16 +182,16 @@ export function Post({
         />
       </div>
       
-      {/* Speech bubble pointing to avatar */}
-      <article className="pixel-card bg-white relative ml-12">
+      {/* Speech bubble pointing to avatar - positioned near name level */}
+      <article className="pixel-card bg-white relative ml-12 -mt-2">
         {/* Date and time in top right corner */}
-        <div className="absolute top-2 right-2 text-[10px] text-gray-500">
+        <div className="absolute top-2 right-2 text-[10px] text-gray-500 z-10">
           {formatDateTime(post.createdAt)}
         </div>
         
-        {/* Speech bubble tail pointing to avatar */}
-        <div className="absolute -left-3 top-4 w-0 h-0 border-t-[8px] border-t-transparent border-r-[12px] border-r-white border-b-[8px] border-b-transparent"></div>
-        <div className="absolute -left-4 top-4 w-0 h-0 border-t-[9px] border-t-transparent border-r-[13px] border-r-black border-b-[9px] border-b-transparent"></div>
+        {/* Speech bubble tail pointing to bottom of avatar */}
+        <div className="absolute -left-3 top-8 w-0 h-0 border-t-[8px] border-t-transparent border-r-[12px] border-r-white border-b-[8px] border-b-transparent"></div>
+        <div className="absolute -left-4 top-8 w-0 h-0 border-t-[9px] border-t-transparent border-r-[13px] border-r-black border-b-[9px] border-b-transparent"></div>
 
         {isEditing ? (
           <div className="mb-2">
@@ -227,7 +227,7 @@ export function Post({
           </div>
         ) : (
           <>
-            <p className="mb-2 text-sm whitespace-pre-wrap break-words text-black">{post.text}</p>
+            <p className="mb-2 text-sm whitespace-pre-wrap break-words text-black pt-4 pr-16">{post.text}</p>
 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 flex-wrap">
