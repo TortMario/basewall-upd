@@ -15,12 +15,13 @@
     "splashImageUrl": "https://basewall.vercel.app/splash.png",
     "splashBackgroundColor": "#1e293b",
     "subtitle": "NFT Social Feed",
-    "description": "Create posts minted as NFTs on Base. Each post is a unique ERC-721 token with on-chain ownership.",
+    "description": "Create posts minted as NFTs on Base Each post is a unique ERC-721 token with on-chain ownership",
     "primaryCategory": "social",
     "tags": ["nft", "social", "base"],
     "tagline": "NFT Social Feed",
     "ogTitle": "The Wall Base",
-    "ogDescription": "NFT Social Feed on Base - Create posts minted as NFTs",
-    "ogImageUrl": "https://basewall.vercel.app/og.png"
+    "ogDescription": "NFT Social Feed on Base Create posts minted as NFTs",
+    "ogImageUrl": "https://basewall.vercel.app/og.png",
+    "noindex": false
   }
 }
