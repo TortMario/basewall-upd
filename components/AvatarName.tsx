@@ -22,7 +22,7 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
 
   return (
     <div
-      className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+      className="flex items-start gap-2 cursor-pointer hover:opacity-80 transition-opacity"
       onClick={onClick}
     >
       <div className="pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 w-10 h-10 flex items-center justify-center">
@@ -39,7 +39,7 @@ export function AvatarName({ address, author, onClick }: AvatarNameProps) {
         )}
       </div>
       {displayName && (
-        <span className="text-sm text-black font-semibold">{displayName}</span>
+        <span className="text-sm text-black font-semibold pt-0">{displayName}</span>
       )}
     </div>
   )

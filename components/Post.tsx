@@ -166,19 +166,21 @@ export function Post({
   return (
     <div className="mb-6 relative">
       {/* Avatar and name outside the card, like comic style */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-start gap-2 mb-2">
         <AvatarName 
           address={ownerAddress} 
           author={author}
           onClick={handleProfileClick} 
         />
-        <div className="text-[10px] text-gray-500">
-          {formatDateTime(post.createdAt)}
-        </div>
       </div>
       
       {/* Speech bubble pointing to avatar */}
       <article className="pixel-card bg-white relative ml-12">
+        {/* Date and time in top right corner */}
+        <div className="absolute top-2 right-2 text-[10px] text-gray-500">
+          {formatDateTime(post.createdAt)}
+        </div>
+        
         {/* Speech bubble tail pointing to avatar */}
         <div className="absolute -left-3 top-4 w-0 h-0 border-t-[8px] border-t-transparent border-r-[12px] border-r-white border-b-[8px] border-b-transparent"></div>
         <div className="absolute -left-4 top-4 w-0 h-0 border-t-[9px] border-t-transparent border-r-[13px] border-r-black border-b-[9px] border-b-transparent"></div>
