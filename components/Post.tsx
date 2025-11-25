@@ -107,14 +107,22 @@ export function Post({
   const handleProfileClick = async () => {
     try {
       const isInMiniApp = await sdk.isInMiniApp()
+      // Use Base App profile URL format: https://base.app/profile/{username or address}
+      const profileUrl = author?.username 
+        ? `https://base.app/profile/${author.username}`
+        : `https://base.app/profile/${ownerAddress}`
+      
       if (isInMiniApp) {
-        await sdk.actions.openUrl(`https://base.org/profile/${ownerAddress}`)
+        await sdk.actions.openUrl(profileUrl)
       } else {
-        window.open(`https://base.org/profile/${ownerAddress}`, '_blank')
+        window.open(profileUrl, '_blank')
       }
     } catch (error) {
       console.warn('Failed to open profile URL:', error)
-      window.open(`https://base.org/profile/${ownerAddress}`, '_blank')
+      const profileUrl = author?.username 
+        ? `https://base.app/profile/${author.username}`
+        : `https://base.app/profile/${ownerAddress}`
+      window.open(profileUrl, '_blank')
     }
   }
 
