@@ -7,18 +7,23 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract OneStreamNFT is ERC721, ERC721URIStorage, Ownable {
     uint256 public nextTokenId;
-    
-    // Optional: allow public minting or restrict to owner
-    bool public publicMintingEnabled;
+    string private _baseTokenURI;
 
-    constructor(address initialOwner) ERC721("OneStream Post", "OSTR") Ownable(initialOwner) {
+    constructor(
+        address initialOwner,
+        string memory baseURI
+    ) ERC721("OneStream", "OST") Ownable(initialOwner) {
         nextTokenId = 1;
-        publicMintingEnabled = true; // Set to false if you want only owner to mint
+        _baseTokenURI = baseURI;
     }
 
-    function mintTo(address to, string calldata tokenURI) external returns (uint256) {
-        require(publicMintingEnabled || msg.sender == owner(), "Minting not allowed");
-        
+    /**
+     * @dev Mint NFT - only owner can mint
+     * @param to Address to mint NFT to
+     * @param tokenURI URI for the token metadata (will be appended to baseURI)
+     * @return tokenId The ID of the minted token
+     */
+    function mintTo(address to, string calldata tokenURI) external onlyOwner returns (uint256) {
         uint256 id = nextTokenId;
         nextTokenId++;
         
@@ -26,6 +31,20 @@ contract OneStreamNFT is ERC721, ERC721URIStorage, Ownable {
         _setTokenURI(id, tokenURI);
         
         return id;
+    }
+
+    /**
+     * @dev Get base URI
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    /**
+     * @dev Update base URI (only owner)
+     */
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
+        _baseTokenURI = newBaseURI;
     }
 
     // Override required by Solidity
@@ -47,15 +66,12 @@ contract OneStreamNFT is ERC721, ERC721URIStorage, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
-    // Burn function - only token owner can burn
+    /**
+     * @dev Burn function - only token owner can burn
+     */
     function burn(uint256 tokenId) external {
         require(ownerOf(tokenId) == msg.sender, "Only token owner can burn");
         _burn(tokenId);
-    }
-
-    // Owner functions
-    function setPublicMinting(bool enabled) external onlyOwner {
-        publicMintingEnabled = enabled;
     }
 }
 

@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "compile": "hardhat compile",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network base",
     "deploy:contract": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "mint:test": "hardhat run scripts/mintTest.ts",
+    "verify:sepolia": "hardhat verify --network baseSepolia",
+    "verify:mainnet": "hardhat verify --network base",
     "seed": "tsx scripts/seed.ts",
     "setup": "bash scripts/setup-env.sh"
   },

@@ -15,15 +15,19 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    // Base Sepolia Testnet
     baseSepolia: {
       url: process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://sepolia.base.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 84532,
+      gasPrice: 1000000000, // 1 gwei
     },
+    // Base Mainnet
     base: {
-      url: "https://mainnet.base.org",
+      url: process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 8453,
+      gasPrice: 1000000000, // 1 gwei
     },
   },
   etherscan: {
