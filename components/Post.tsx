@@ -183,7 +183,7 @@ export function Post({
       </div>
       
       {/* Speech bubble pointing to avatar - positioned near name level */}
-      <article className="pixel-card bg-white relative ml-12 -mt-12">
+      <article className="pixel-card bg-white relative ml-12 -mt-6">
         {/* Date and time in top right corner - hidden during edit */}
         {!isEditing && (
           <div className="absolute top-2 right-2 text-[10px] text-gray-500 z-10">
