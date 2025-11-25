@@ -156,7 +156,7 @@ export function Post({
   }
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 relative">
       <article className="pixel-card bg-white">
         <div className="flex items-start justify-between mb-2">
           <AvatarName 
@@ -164,7 +164,10 @@ export function Post({
             author={author}
             onClick={handleProfileClick} 
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="text-[10px] text-gray-500 text-right">
+              {formatDateTime(post.createdAt)}
+            </div>
             {post.mintStatus === 'pending' && (
               <span className="text-xs text-pixel-yellow">Minting...</span>
             )}
@@ -240,35 +243,31 @@ export function Post({
                   </>
                 )}
               </div>
-              <div className="text-[10px] text-gray-500 text-right flex-shrink-0">
-                {formatDateTime(post.createdAt)}
-              </div>
-            </div>
-
-            {/* Кнопки рейтинга вынесены отдельно */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onReaction(post.id, 'like')}
-                className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-                  userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
-                }`}
-              >
-                <span className="text-sm">▲</span>
-                <span>{post.likes}</span>
-              </button>
-              <button
-                onClick={() => onReaction(post.id, 'dislike')}
-                className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
-                  userReaction === 'dislike' ? 'bg-red-600' : ''
-                }`}
-              >
-                <span className="text-sm">▼</span>
-                <span>{post.dislikes}</span>
-              </button>
             </div>
           </>
         )}
       </article>
+      {/* Rating buttons below the card, aligned to the right */}
+      <div className="flex items-center gap-1 justify-end mt-1">
+        <button
+          onClick={() => onReaction(post.id, 'like')}
+          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+            userReaction === 'like' ? 'bg-pixel-yellow text-black' : ''
+          }`}
+        >
+          <span className="text-sm">▲</span>
+          <span>{post.likes}</span>
+        </button>
+        <button
+          onClick={() => onReaction(post.id, 'dislike')}
+          className={`flex items-center gap-1 text-xs pixel-button px-2 py-1 ${
+            userReaction === 'dislike' ? 'bg-red-600' : ''
+          }`}
+        >
+          <span className="text-sm">▼</span>
+          <span>{post.dislikes}</span>
+        </button>
+      </div>
     </div>
   )
 }
