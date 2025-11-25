@@ -12,22 +12,11 @@ const defaultChain = isMainnet ? base : baseSepolia
 const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || (isMainnet ? 'https://mainnet.base.org' : 'https://sepolia.base.org')
 
 // Create connectors array with multiple wallet options
+// Note: We use a single injected connector to avoid conflicts with multiple wallet extensions
 const connectors = [
-  // Injected connector (works with Base App and browser extensions)
+  // Injected connector (works with Base App and browser extensions like MetaMask, Coinbase Wallet)
   injected({
     target: 'metaMask',
-  }),
-  // MetaMask connector
-  metaMask({
-    dappMetadata: {
-      name: 'The Wall Base',
-      url: typeof window !== 'undefined' ? window.location.origin : '',
-    },
-  }),
-  // Coinbase Wallet connector
-  coinbaseWallet({
-    appName: 'The Wall Base',
-    appLogoUrl: typeof window !== 'undefined' ? `${window.location.origin}/icon.png` : '',
   }),
 ]
 
