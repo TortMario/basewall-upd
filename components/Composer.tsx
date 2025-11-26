@@ -35,7 +35,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
               username: user.username || null,
               displayName: user.displayName || null,
               pfp: user.pfpUrl && user.pfpUrl.trim() !== '' ? user.pfpUrl : null,
-              address: user.custodyAddress || null,
+              address: null,
             }
           }
         }
