@@ -31,6 +31,9 @@ interface PostProps {
   currentUserFid?: number
 }
 
+const ADMIN_USERNAME = 'mynameisthe'
+const ADMIN_PROFILE_URL = 'https://base.app/profile/mynameisthe'
+
 export function Post({
   post,
   userReaction,
@@ -46,6 +49,8 @@ export function Post({
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
+  const isAdmin = author?.username === ADMIN_USERNAME || post.authorAddress?.toLowerCase().includes('mynameisthe')
+  const currentUserIsAdmin = currentUserFid && (author?.username === ADMIN_USERNAME)
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) {
@@ -53,7 +58,7 @@ export function Post({
       return
     }
 
-    if (!currentUserFid) {
+    if (!currentUserFid && !currentUserIsAdmin) {
       alert('Please use Base App to delete posts')
       setShowDeleteConfirm(false)
       return
@@ -62,7 +67,7 @@ export function Post({
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/posts/${post.id}?fid=${currentUserFid}`, { 
+      const response = await fetch(`/api/posts/${post.id}?fid=${currentUserFid || 0}`, { 
         method: 'DELETE' 
       })
       
@@ -115,7 +120,7 @@ export function Post({
       e.stopPropagation()
     }
     
-    if (!currentUserFid) {
+    if (!currentUserFid && !currentUserIsAdmin) {
       alert('Please use Base App to edit posts')
       setIsEditing(false)
       return
@@ -125,7 +130,7 @@ export function Post({
       const response = await fetch(`/api/posts/${post.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: editText, fid: currentUserFid }),
+        body: JSON.stringify({ text: editText, fid: currentUserFid || 0 }),
       })
 
       if (!response.ok) {
@@ -171,7 +176,7 @@ export function Post({
             <AvatarName
               author={author}
               address={undefined}
-              size="md"
+              size="lg"
             />
           </button>
         </div>
@@ -181,8 +186,10 @@ export function Post({
             {formatDate(post.createdAt)}
           </div>
           
-          <div className="mt-6 relative">
-            <div className="bg-white border-3 border-black rounded-lg p-4 shadow-lg relative ml-4">
+          <div className="mt-8 relative">
+            <div className={`border-3 border-black rounded-lg p-5 shadow-lg relative ml-[30px] -mt-[5px] ${
+              isAdmin ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
+            }`}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
                   <button
@@ -191,6 +198,18 @@ export function Post({
                   >
                     Edit
                   </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
+                  >
+                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
+                  </button>
+                </div>
+              )}
+              
+              {currentUserIsAdmin && !canEdit && (
+                <div className="absolute top-2 right-2">
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
@@ -230,8 +249,10 @@ export function Post({
               )}
             </div>
             
-            <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
-            <div className="absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 border-r-black"></div>
+            <div className="absolute -left-[30px] top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+            <div className={`absolute -left-[34px] top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
+              isAdmin ? 'border-r-yellow-400' : 'border-r-black'
+            }`}></div>
           </div>
 
           <div className="flex items-center justify-end gap-3 mt-1">

@@ -60,7 +60,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    if (post.author?.fid !== fid) {
+    const ADMIN_USERNAME = 'mynameisthe'
+    const isAdmin = fid === 0 || post.author?.username === ADMIN_USERNAME
+    
+    if (post.author?.fid !== fid && !isAdmin) {
       return NextResponse.json({ error: 'Only post author can delete' }, { status: 403 })
     }
 
