@@ -171,7 +171,7 @@ export function Post({
 
   return (
     <div className="mb-6">
-      <div className={`flex items-start gap-3 ${isAuthor ? 'flex-row-reverse' : ''}`}>
+      <div className="flex items-start gap-3">
         <div className="flex flex-col items-center">
           <button
             onClick={handleProfileClick}
@@ -186,14 +186,18 @@ export function Post({
         </div>
         
         <div className="flex-1 relative">
-          <div className={`absolute top-0 text-xs text-gray-500 ${isAuthor ? 'left-0' : 'right-0'}`}>
-            {formatDate(post.createdAt)}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-bold text-gray-900 text-lg">
+              {author?.displayName || author?.username || `User ${post.authorAddress.slice(0, 6)}`}
+            </span>
+            <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
           </div>
           
-          <div className="mt-[28px] relative">
+          <div className="mt-2 relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
-              isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
-            } ${canEdit ? 'scale-110' : ''} ${isAuthor ? 'mr-[-20px]' : ''}`} style={{ padding: canEdit ? '38.5px' : '35px' }}>
+              isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
+              isAuthor ? 'bg-blue-50' : 'bg-white'
+            } ${canEdit ? 'scale-110 ml-[-20px]' : ''}`} style={{ padding: canEdit ? '38.5px' : '35px' }}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
                   <button
@@ -250,26 +254,16 @@ export function Post({
                   </div>
                 </div>
               ) : (
-                <p className="text-black text-base leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+                <p className="text-black text-sm leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
               )}
             </div>
             
-            {!isAuthor && (
-              <>
-                <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
-                <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
-                  isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
-                }`}></div>
-              </>
-            )}
-            {isAuthor && (
-              <>
-                <div className="absolute -right-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-white"></div>
-                <div className={`absolute -right-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-l-10 ${
-                  isAdminPost ? 'border-l-yellow-400' : 'border-l-black'
-                }`}></div>
-              </>
-            )}
+            <div className={`absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
+              isAuthor ? 'border-r-blue-50' : isAdminPost ? 'border-r-yellow-200' : 'border-r-white'
+            }`}></div>
+            <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
+              isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
+            }`}></div>
           </div>
 
           {!isAuthor && (
