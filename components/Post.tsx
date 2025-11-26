@@ -186,14 +186,11 @@ export function Post({
         </div>
         
         <div className="flex-1 relative">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-gray-900 text-lg">
-              {author?.displayName || author?.username || `User ${post.authorAddress.slice(0, 6)}`}
-            </span>
-            <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
+          <div className="absolute top-0 right-0 text-xs text-gray-500">
+            {formatDate(post.createdAt)}
           </div>
           
-          <div className="mt-2 relative">
+          <div className="mt-[28px] relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-blue-50' : 'bg-white'
