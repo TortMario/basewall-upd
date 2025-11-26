@@ -26,7 +26,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100 p-4 max-w-2xl mx-auto">
       <header className="mb-6 text-center">
         <a 
-          href="https://base.app/profile/mynameisthe" 
+          href="https://base.app/profile/base" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-block hover:opacity-80 transition-opacity"
