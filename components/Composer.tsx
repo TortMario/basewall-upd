@@ -93,7 +93,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mb-6">
-      <div className="bg-pixel-gray border-2 border-pixel-dark rounded-lg p-4">
+      <div className="bg-white border-3 border-black rounded-lg p-4 shadow-lg">
         <textarea
           value={text}
           onChange={(e) => {
@@ -101,7 +101,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
             setError(null)
           }}
           placeholder="What's on your mind?"
-          className="w-full bg-transparent text-white placeholder-pixel-light resize-none outline-none mb-3 text-base"
+          className="w-full bg-transparent text-black placeholder-gray-400 resize-none outline-none mb-3 text-base"
           rows={4}
           maxLength={280}
           disabled={isSubmitting}
@@ -109,11 +109,11 @@ export function Composer({ onPostCreated }: ComposerProps) {
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className={`text-sm ${remainingChars < 20 ? 'text-red-500' : 'text-pixel-light'}`}>
+            <span className={`text-sm ${remainingChars < 20 ? 'text-red-500' : 'text-gray-500'}`}>
               {remainingChars}
             </span>
             {error && <span className="text-sm text-red-500">{error}</span>}
-            {isSubmitting && <span className="text-sm text-pixel-teal">Creating post...</span>}
+            {isSubmitting && <span className="text-sm text-blue-600">Creating post...</span>}
           </div>
           
           <button
@@ -121,8 +121,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
             disabled={!canSubmit}
             className={`px-4 py-2 rounded border-2 font-bold transition-colors text-base ${
               canSubmit
-                ? 'bg-pixel-yellow text-pixel-dark border-pixel-dark hover:bg-pixel-yellow/80'
-                : 'bg-pixel-gray text-pixel-light border-pixel-dark cursor-not-allowed'
+                ? 'bg-yellow-400 text-black border-black hover:bg-yellow-500'
+                : 'bg-gray-200 text-gray-500 border-gray-400 cursor-not-allowed'
             }`}
           >
             Post
