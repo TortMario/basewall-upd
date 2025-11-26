@@ -167,9 +167,11 @@ export function Post({
     return date.toLocaleDateString()
   }
 
+  const isAuthor = canEdit
+
   return (
     <div className="mb-6">
-      <div className="flex items-start gap-3">
+      <div className={`flex items-start gap-3 ${isAuthor ? 'flex-row-reverse' : ''}`}>
         <div className="flex flex-col items-center">
           <button
             onClick={handleProfileClick}
@@ -184,14 +186,14 @@ export function Post({
         </div>
         
         <div className="flex-1 relative">
-          <div className="absolute top-0 right-0 text-xs text-gray-500">
+          <div className={`absolute top-0 text-xs text-gray-500 ${isAuthor ? 'left-0' : 'right-0'}`}>
             {formatDate(post.createdAt)}
           </div>
           
           <div className="mt-[28px] relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
-            } ${canEdit ? 'scale-110 ml-[-20px]' : ''}`} style={{ padding: canEdit ? '38.5px' : '35px' }}>
+            } ${canEdit ? 'scale-110' : ''} ${isAuthor ? 'mr-[-20px]' : ''}`} style={{ padding: canEdit ? '38.5px' : '35px' }}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
                   <button
@@ -252,36 +254,50 @@ export function Post({
               )}
             </div>
             
-            <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
-            <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
-              isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
-            }`}></div>
+            {!isAuthor && (
+              <>
+                <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+                <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
+                  isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
+                }`}></div>
+              </>
+            )}
+            {isAuthor && (
+              <>
+                <div className="absolute -right-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-white"></div>
+                <div className={`absolute -right-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-l-10 ${
+                  isAdminPost ? 'border-l-yellow-400' : 'border-l-black'
+                }`}></div>
+              </>
+            )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 mt-1">
-            <button
-              onClick={() => onReaction(post.id, 'like')}
-              className={`flex items-center gap-1.5 text-sm transition-colors ${
-                userReaction === 'like'
-                  ? 'text-yellow-500'
-                  : 'text-gray-600 hover:text-yellow-500'
-              }`}
-            >
-              <span className="text-lg">👍</span>
-              <span className="font-bold">{post.likes}</span>
-            </button>
-            <button
-              onClick={() => onReaction(post.id, 'dislike')}
-              className={`flex items-center gap-1.5 text-sm transition-colors ${
-                userReaction === 'dislike'
-                  ? 'text-red-500'
-                  : 'text-gray-600 hover:text-red-500'
-              }`}
-            >
-              <span className="text-lg">👎</span>
-              <span className="font-bold">{post.dislikes}</span>
-            </button>
-          </div>
+          {!isAuthor && (
+            <div className="flex items-center justify-end gap-3 mt-1">
+              <button
+                onClick={() => onReaction(post.id, 'like')}
+                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                  userReaction === 'like'
+                    ? 'text-yellow-500'
+                    : 'text-gray-600 hover:text-yellow-500'
+                }`}
+              >
+                <span className="text-lg">👍</span>
+                <span className="font-bold">{post.likes}</span>
+              </button>
+              <button
+                onClick={() => onReaction(post.id, 'dislike')}
+                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                  userReaction === 'dislike'
+                    ? 'text-red-500'
+                    : 'text-gray-600 hover:text-red-500'
+                }`}
+              >
+                <span className="text-lg">👎</span>
+                <span className="font-bold">{post.dislikes}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
