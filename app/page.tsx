@@ -35,7 +35,7 @@ export default function Home() {
         <p className="text-xs text-gray-400">Social Feed on Base</p>
       </header>
 
-      <Composer onPostCreated={handlePostCreated} />
+        <Composer onPostCreated={handlePostCreated} />
 
       <PostList key={refreshKey} onEdit={handleEdit} />
       <ScrollButtons />

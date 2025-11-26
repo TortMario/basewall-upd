@@ -34,9 +34,9 @@ interface PostProps {
   currentUserUsername?: string
 }
 
-const ADMIN_USERNAME = 'mynameisthe'
-const ADMIN_ADDRESS = '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
-const ADMIN_PROFILE_URL = 'https://base.app/profile/mynameisthe'
+const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+const ADMIN_PROFILE_URL = `https://base.app/profile/${ADMIN_USERNAME}`
 
 export function Post({
   post,

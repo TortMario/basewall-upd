@@ -21,7 +21,7 @@ export async function PATCH(
 
     if (post.author?.fid !== fid) {
       return NextResponse.json({ error: 'Only post author can edit' }, { status: 403 })
-    }
+        }
 
     const updateData: any = {}
     if (text !== undefined) updateData.text = text
@@ -61,15 +61,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const ADMIN_USERNAME = 'mynameisthe'
-    const ADMIN_ADDRESS = '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
+    const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
     const isAdmin = usernameParam === ADMIN_USERNAME || 
                     post.author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
                     post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
     
     if (post.author?.fid !== fid && !isAdmin) {
       return NextResponse.json({ error: 'Only post author can delete' }, { status: 403 })
-    }
+        }
 
     await kv.deletePost(id)
     return NextResponse.json({ success: true })

@@ -94,8 +94,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
   return (
     <form onSubmit={handleSubmit} className="mb-6">
       <div className="bg-white border-3 border-black rounded-lg p-4 shadow-lg">
-        <textarea
-          value={text}
+          <textarea
+            value={text}
           onChange={(e) => {
             setText(e.target.value)
             setError(null)
@@ -103,11 +103,11 @@ export function Composer({ onPostCreated }: ComposerProps) {
           placeholder="What's on your mind?"
           className="w-full bg-transparent text-black placeholder-gray-400 resize-none outline-none mb-3 text-base"
           rows={4}
-          maxLength={280}
-          disabled={isSubmitting}
-        />
+            maxLength={280}
+            disabled={isSubmitting}
+          />
         
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className={`text-sm ${remainingChars < 20 ? 'text-red-500' : 'text-gray-500'}`}>
               {remainingChars}
@@ -116,9 +116,9 @@ export function Composer({ onPostCreated }: ComposerProps) {
             {isSubmitting && <span className="text-sm text-blue-600">Creating post...</span>}
           </div>
           
-          <button
+      <button
             type="submit"
-            disabled={!canSubmit}
+        disabled={!canSubmit}
             className={`px-4 py-2 rounded border-2 font-bold transition-colors text-base ${
               canSubmit
                 ? 'bg-yellow-400 text-black border-black hover:bg-yellow-500'
@@ -126,8 +126,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
             }`}
           >
             Post
-          </button>
-        </div>
+      </button>
+    </div>
       </div>
     </form>
   )

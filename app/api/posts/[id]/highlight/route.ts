@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as kv from '@/lib/kv'
 
-const ADMIN_USERNAME = 'mynameisthe'
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
 
 export async function PUT(
   request: NextRequest,
