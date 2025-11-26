@@ -60,10 +60,9 @@ cp .env.local.example .env.local
 Required variables:
 
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Database (Vercel KV)
+KV_REST_API_URL=your_vercel_kv_rest_api_url
+KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 
 # Base Network
 NEXT_PUBLIC_BASE_RPC_URL=https://sepolia.base.org
@@ -72,6 +71,13 @@ NEXT_PUBLIC_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
 # Mini App
 NEXT_PUBLIC_MINIAPP_URL=https://your-app.vercel.app
 NEXT_PUBLIC_MINIAPP_NAME=OneStream
+
+# Admin Configuration (IMPORTANT!)
+# Set your Farcaster username and Base wallet address
+ADMIN_USERNAME=your_farcaster_username
+ADMIN_ADDRESS=0xYourBaseWalletAddress
+NEXT_PUBLIC_ADMIN_USERNAME=your_farcaster_username
+NEXT_PUBLIC_ADMIN_ADDRESS=0xYourBaseWalletAddress
 
 # Quick Auth (optional for now)
 QUICK_AUTH_SECRET=your_quick_auth_secret
@@ -118,7 +124,15 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 1. Push your code to GitHub
 2. Import project in Vercel
 3. Add all environment variables from `.env.local`
-4. Deploy
+4. **IMPORTANT: Configure Admin Variables**
+   - Go to your Vercel project Settings → Environment Variables
+   - Add the following variables (use the same values for both server and client):
+     - `ADMIN_USERNAME` - Your Farcaster username (e.g., `mynameisthe`)
+     - `ADMIN_ADDRESS` - Your Base wallet address (e.g., `0xCdBBdba01063a3A82f1D72Fb601fedFCff808183`)
+     - `NEXT_PUBLIC_ADMIN_USERNAME` - Same as `ADMIN_USERNAME` (for client-side)
+     - `NEXT_PUBLIC_ADMIN_ADDRESS` - Same as `ADMIN_ADDRESS` (for client-side)
+   - Make sure to set these for **Production**, **Preview**, and **Development** environments
+5. Deploy
 
 ### 2. Update Mini App URL
 

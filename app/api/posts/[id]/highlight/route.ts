@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as kv from '@/lib/kv'
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
+const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
 
 export async function PUT(
   request: NextRequest,
@@ -11,14 +12,19 @@ export async function PUT(
     const { id } = params
     const searchParams = request.nextUrl.searchParams
     const usernameParam = searchParams.get('username')
-
-    if (usernameParam !== ADMIN_USERNAME) {
-      return NextResponse.json({ error: 'Only admin can highlight posts' }, { status: 403 })
-    }
+    const addressParam = searchParams.get('address')
 
     const post = await kv.getPost(id)
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+
+    // Check admin by username or address (current user's credentials)
+    const isAdmin = usernameParam === ADMIN_USERNAME || 
+                    addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Only admin can highlight posts' }, { status: 403 })
     }
 
     const updated = await kv.updatePost(id, { isHighlighted: !post.isHighlighted })

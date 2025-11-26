@@ -17,6 +17,7 @@ export function PostList({ onEdit }: PostListProps) {
   const [userReactions, setUserReactions] = useState<Record<string, 'like' | 'dislike'>>({})
   const [currentUserFid, setCurrentUserFid] = useState<number | undefined>(undefined)
   const [currentUserUsername, setCurrentUserUsername] = useState<string | undefined>(undefined)
+  const [currentUserAddress, setCurrentUserAddress] = useState<string | undefined>(undefined)
   const observerTarget = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,6 +33,10 @@ export function PostList({ onEdit }: PostListProps) {
             if (context.user.username) {
               setCurrentUserUsername(context.user.username)
             }
+          }
+          // Try to get address from account
+          if (context?.account) {
+            setCurrentUserAddress(context.account.address)
           }
         }
       } catch {}
@@ -174,6 +179,7 @@ export function PostList({ onEdit }: PostListProps) {
           onDelete={handleDelete}
           currentUserFid={currentUserFid}
           currentUserUsername={currentUserUsername}
+          currentUserAddress={currentUserAddress}
         />
       ))}
       <div ref={observerTarget} className="h-4" />

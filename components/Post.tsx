@@ -32,6 +32,7 @@ interface PostProps {
   onDelete: (postId: string) => void
   currentUserFid?: number
   currentUserUsername?: string
+  currentUserAddress?: string
 }
 
 const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
@@ -46,6 +47,7 @@ export function Post({
   onDelete,
   currentUserFid,
   currentUserUsername,
+  currentUserAddress,
 }: PostProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -56,7 +58,9 @@ export function Post({
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
-  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME
+  // Check admin by username or address (current user's address, not post author's)
+  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME || 
+                              (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
   const isHighlighted = post.isHighlighted || false
 
   const handleDelete = async () => {
@@ -74,7 +78,12 @@ export function Post({
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/posts/${post.id}?fid=${currentUserFid || 0}&username=${currentUserUsername || ''}`, { 
+      const params = new URLSearchParams({
+        fid: (currentUserFid || 0).toString(),
+        username: currentUserUsername || '',
+        ...(currentUserAddress && { address: currentUserAddress })
+      })
+      const response = await fetch(`/api/posts/${post.id}?${params.toString()}`, { 
         method: 'DELETE' 
       })
       
@@ -162,7 +171,11 @@ export function Post({
 
     setIsHighlighting(true)
     try {
-      const response = await fetch(`/api/posts/${post.id}/highlight?username=${currentUserUsername || ''}`, {
+      const params = new URLSearchParams({
+        username: currentUserUsername || '',
+        ...(currentUserAddress && { address: currentUserAddress })
+      })
+      const response = await fetch(`/api/posts/${post.id}/highlight?${params.toString()}`, {
         method: 'PUT'
       })
       
@@ -188,7 +201,11 @@ export function Post({
 
     setIsHiding(true)
     try {
-      const response = await fetch(`/api/posts/${post.id}/hide?username=${currentUserUsername || ''}`, {
+      const params = new URLSearchParams({
+        username: currentUserUsername || '',
+        ...(currentUserAddress && { address: currentUserAddress })
+      })
+      const response = await fetch(`/api/posts/${post.id}/hide?${params.toString()}`, {
         method: 'PUT'
       })
       
