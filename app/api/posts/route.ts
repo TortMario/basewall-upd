@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     const allPosts = await kv.getPosts(limit * 10, 0) // Get more to filter
     
     // Filter: only show posts with mintStatus === 'success' and tokenId
-    const validPosts = allPosts.posts.filter(
+    const validPosts = allPosts.filter(
       (post) => post.mintStatus === 'success' && post.tokenId !== null
     )
     
