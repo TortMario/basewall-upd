@@ -55,9 +55,7 @@ export function Post({
   const isAdminPost = author?.username === ADMIN_USERNAME || 
                       author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
                       post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
-  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME || 
-                             author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
-                             post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) {
