@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 
-const miniappUrl = process.env.NEXT_PUBLIC_MINIAPP_URL || 'https://basewall.vercel.app'
-const heroImageUrl = `${miniappUrl}/og.png`
+// Use the same URLs as in the manifest for consistency
+const miniappUrl = 'https://basewall.vercel.app'
+const heroImageUrl = 'https://basewall.vercel.app/og.png'
 
 export const metadata: Metadata = {
   title: 'The Wall Base - Social Feed',
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og.png',
+        url: heroImageUrl,
         width: 1200,
         height: 630,
         alt: 'The Wall Base - Social Feed',
