@@ -167,6 +167,9 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error('Invalid contract address')
       }
 
+      // Get mint fee from contract (0.0001 ETH = ~0.05 USD)
+      const MINT_FEE = BigInt('100000000000000') // 0.0001 ETH in wei
+      
       // Try wagmi writeContract first
       try {
         console.log('Attempting to call writeContract via wagmi...')
@@ -175,6 +178,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
           abi: contractABI,
           functionName: 'mintTo',
           args: [address as Address, metadataUri],
+          value: MINT_FEE,
         })
         console.log('writeContract called successfully, waiting for hash...')
         
@@ -347,13 +351,15 @@ export function Composer({ onPostCreated }: ComposerProps) {
       }
     }
 
-    // Send transaction
+    // Send transaction with mint fee (0.0001 ETH = ~0.05 USD)
+    const MINT_FEE = '0x16345785D8A0000' // 0.0001 ETH in hex (100000000000000 wei)
     const txHash = await ethereum.request({
       method: 'eth_sendTransaction',
       params: [{
         from: address,
         to: contractAddress,
         data: data,
+        value: MINT_FEE, // Mint fee: 0.0001 ETH
       }],
     }) as string
 

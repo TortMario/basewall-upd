@@ -98,16 +98,24 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/posts - Get posts with pagination
+// GET /api/posts - Get posts with pagination (only posts with successful mint)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    const posts = await kv.getPosts(limit, offset)
+    const allPosts = await kv.getPosts(limit * 10, 0) // Get more to filter
+    
+    // Filter: only show posts with mintStatus === 'success' and tokenId
+    const validPosts = allPosts.posts.filter(
+      (post) => post.mintStatus === 'success' && post.tokenId !== null
+    )
+    
+    // Apply pagination after filtering
+    const paginatedPosts = validPosts.slice(offset, offset + limit)
 
-    return NextResponse.json({ posts })
+    return NextResponse.json({ posts: paginatedPosts, total: validPosts.length })
   } catch (error) {
     console.error('GET /api/posts error:', error)
     return NextResponse.json({ 

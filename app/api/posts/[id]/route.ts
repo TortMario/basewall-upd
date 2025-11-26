@@ -134,6 +134,47 @@ export async function DELETE(
       }
     }
 
+    // If post has tokenId, burn the NFT before deleting
+    if (post.tokenId) {
+      const chain = process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
+        ? baseSepolia
+        : base
+
+      const client = createPublicClient({
+        chain,
+        transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
+      })
+
+      try {
+        // Verify ownership before burning
+        const owner = await client.readContract({
+          address: contractAddress,
+          abi: contractABI,
+          functionName: 'ownerOf',
+          args: [BigInt(post.tokenId)],
+        })
+
+        // If auth is provided, verify ownership
+        if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
+          if (owner.toLowerCase() !== auth.address.toLowerCase()) {
+            return NextResponse.json({ error: 'Only token owner can delete' }, { status: 403 })
+          }
+        }
+
+        // Note: Burning NFT requires a transaction from the owner
+        // This should be done on the client side before calling DELETE
+        // We just verify ownership here
+      } catch (error) {
+        console.error('On-chain ownership check failed:', error)
+        // If token doesn't exist (already burned), continue with deletion
+        if (error instanceof Error && error.message.includes('nonexistent token')) {
+          console.log('Token already burned, proceeding with deletion')
+        } else {
+          return NextResponse.json({ error: 'Failed to verify ownership' }, { status: 500 })
+        }
+      }
+    }
+
     // Delete post
     await kv.deletePost(id)
 
