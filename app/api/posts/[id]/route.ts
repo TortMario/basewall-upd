@@ -45,6 +45,7 @@ export async function DELETE(
     const { id } = params
     const searchParams = request.nextUrl.searchParams
     const fidParam = searchParams.get('fid')
+    const usernameParam = searchParams.get('username')
 
     if (!fidParam) {
       return NextResponse.json({ error: 'FID is required' }, { status: 400 })
@@ -61,7 +62,7 @@ export async function DELETE(
     }
 
     const ADMIN_USERNAME = 'mynameisthe'
-    const isAdmin = fid === 0 || post.author?.username === ADMIN_USERNAME
+    const isAdmin = usernameParam === ADMIN_USERNAME
     
     if (post.author?.fid !== fid && !isAdmin) {
       return NextResponse.json({ error: 'Only post author can delete' }, { status: 403 })
