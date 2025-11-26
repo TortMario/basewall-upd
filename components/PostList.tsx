@@ -16,21 +16,27 @@ export function PostList({ onEdit }: PostListProps) {
   const [offset, setOffset] = useState(0)
   const [userReactions, setUserReactions] = useState<Record<string, 'like' | 'dislike'>>({})
   const [currentUserFid, setCurrentUserFid] = useState<number | undefined>(undefined)
+  const [currentUserUsername, setCurrentUserUsername] = useState<string | undefined>(undefined)
   const observerTarget = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const getUserFid = async () => {
+    const getUserData = async () => {
       try {
         const isInMiniApp = await sdk.isInMiniApp()
         if (isInMiniApp) {
           const context = await sdk.context
-          if (context?.user?.fid) {
-            setCurrentUserFid(context.user.fid)
+          if (context?.user) {
+            if (context.user.fid) {
+              setCurrentUserFid(context.user.fid)
+            }
+            if (context.user.username) {
+              setCurrentUserUsername(context.user.username)
+            }
           }
         }
       } catch {}
     }
-    getUserFid()
+    getUserData()
   }, [])
 
   const loadPosts = useCallback(async (currentOffset: number, append = false) => {
@@ -163,6 +169,7 @@ export function PostList({ onEdit }: PostListProps) {
           onEdit={onEdit}
           onDelete={handleDelete}
           currentUserFid={currentUserFid}
+          currentUserUsername={currentUserUsername}
         />
       ))}
       <div ref={observerTarget} className="h-4" />

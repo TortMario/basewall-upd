@@ -29,6 +29,7 @@ interface PostProps {
   onEdit: (post: Post) => void
   onDelete: (postId: string) => void
   currentUserFid?: number
+  currentUserUsername?: string
 }
 
 const ADMIN_USERNAME = 'mynameisthe'
@@ -41,6 +42,7 @@ export function Post({
   onEdit,
   onDelete,
   currentUserFid,
+  currentUserUsername,
 }: PostProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -49,8 +51,8 @@ export function Post({
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
-  const isAdmin = author?.username === ADMIN_USERNAME || post.authorAddress?.toLowerCase().includes('mynameisthe')
-  const currentUserIsAdmin = currentUserFid && (author?.username === ADMIN_USERNAME)
+  const isAdminPost = author?.username === ADMIN_USERNAME
+  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) {
@@ -67,7 +69,7 @@ export function Post({
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/posts/${post.id}?fid=${currentUserFid || 0}`, { 
+      const response = await fetch(`/api/posts/${post.id}?fid=${currentUserFid || 0}&username=${currentUserUsername || ''}`, { 
         method: 'DELETE' 
       })
       
@@ -213,9 +215,10 @@ export function Post({
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
+                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
+                    title="Admin: Delete any post"
                   >
-                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
+                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
                   </button>
                 </div>
               )}
