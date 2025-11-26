@@ -245,11 +245,11 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ${canEdit ? 'scale-110 ml-[-50px]' : ''}`} style={{ 
-              paddingTop: canEdit ? '12px' : '10px',
-              paddingRight: canEdit ? '38.5px' : '35px',
-              paddingBottom: canEdit ? '38.5px' : '35px',
-              paddingLeft: canEdit ? '12px' : '10px'
+            }`} style={{ 
+              paddingTop: '10px',
+              paddingRight: '35px',
+              paddingBottom: '35px',
+              paddingLeft: '10px'
             }}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
