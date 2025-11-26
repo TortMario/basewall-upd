@@ -193,8 +193,8 @@ export function Post({
           <div className="mt-[28px] relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
-              isAuthor ? 'bg-blue-50' : 'bg-white'
-            } ${canEdit ? 'scale-110 ml-[-20px]' : ''}`} style={{ 
+              isAuthor ? 'bg-green-50' : 'bg-white'
+            } ${canEdit ? 'scale-110 ml-[-40px]' : ''}`} style={{ 
               paddingTop: canEdit ? '20px' : '18px',
               paddingRight: canEdit ? '38.5px' : '35px',
               paddingBottom: canEdit ? '38.5px' : '35px',
@@ -261,7 +261,7 @@ export function Post({
             </div>
             
             <div className={`absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
-              isAuthor ? 'border-r-blue-50' : isAdminPost ? 'border-r-yellow-200' : 'border-r-white'
+              isAuthor ? 'border-r-green-50' : isAdminPost ? 'border-r-yellow-200' : 'border-r-white'
             }`}></div>
             <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
               isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
