@@ -16,7 +16,8 @@
     "verify:mainnet": "hardhat verify --network base",
     "seed": "tsx scripts/seed.ts",
     "setup": "bash scripts/setup-env.sh",
-    "clear:posts": "tsx scripts/clear-posts.ts"
+    "clear:posts": "tsx scripts/clear-posts.ts",
+    "delete:pending": "tsx scripts/delete-pending-posts.ts"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.5.0",

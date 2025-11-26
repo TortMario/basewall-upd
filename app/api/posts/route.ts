@@ -105,12 +105,17 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    const allPosts = await kv.getPosts(limit * 10, 0) // Get more to filter
+    // Get all posts (we'll filter them)
+    const allPosts = await kv.getPosts(1000, 0) // Get more to filter properly
     
-    // Filter: only show posts with mintStatus === 'success' and tokenId
+    // Filter: only show posts with mintStatus === 'success' AND tokenId is not null
+    // This ensures only posts with successfully minted NFTs are shown
     const validPosts = allPosts.filter(
-      (post) => post.mintStatus === 'success' && post.tokenId !== null
+      (post) => post.mintStatus === 'success' && post.tokenId !== null && post.tokenId !== undefined
     )
+    
+    // Sort by createdAt descending (newest first)
+    validPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     
     // Apply pagination after filtering
     const paginatedPosts = validPosts.slice(offset, offset + limit)
