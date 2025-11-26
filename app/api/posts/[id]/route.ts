@@ -62,7 +62,10 @@ export async function DELETE(
     }
 
     const ADMIN_USERNAME = 'mynameisthe'
-    const isAdmin = usernameParam === ADMIN_USERNAME
+    const ADMIN_ADDRESS = '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+    const isAdmin = usernameParam === ADMIN_USERNAME || 
+                    post.author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
+                    post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
     
     if (post.author?.fid !== fid && !isAdmin) {
       return NextResponse.json({ error: 'Only post author can delete' }, { status: 403 })

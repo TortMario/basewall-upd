@@ -33,6 +33,7 @@ interface PostProps {
 }
 
 const ADMIN_USERNAME = 'mynameisthe'
+const ADMIN_ADDRESS = '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
 const ADMIN_PROFILE_URL = 'https://base.app/profile/mynameisthe'
 
 export function Post({
@@ -51,8 +52,12 @@ export function Post({
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
-  const isAdminPost = author?.username === ADMIN_USERNAME
-  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME
+  const isAdminPost = author?.username === ADMIN_USERNAME || 
+                      author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
+                      post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME || 
+                             author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
+                             post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) {
@@ -269,10 +274,10 @@ export function Post({
           </div>
 
           {!isAuthor && (
-            <div className="flex items-center justify-end gap-3 mt-1">
+            <div className="flex items-center justify-end gap-3 mt-1 overflow-visible relative z-10">
               <button
                 onClick={() => onReaction(post.id, 'like')}
-                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
                   userReaction === 'like'
                     ? 'text-yellow-500'
                     : 'text-gray-600 hover:text-yellow-500'
@@ -283,7 +288,7 @@ export function Post({
               </button>
               <button
                 onClick={() => onReaction(post.id, 'dislike')}
-                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
                   userReaction === 'dislike'
                     ? 'text-red-500'
                     : 'text-gray-600 hover:text-red-500'
