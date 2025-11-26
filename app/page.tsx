@@ -17,13 +17,20 @@ export default function Home() {
     const getUserData = async () => {
       try {
         const isInMiniApp = await sdk.isInMiniApp()
+        console.log('🔍 Home: SDK check:', { isInMiniApp })
         if (isInMiniApp) {
           const context = await sdk.context
+          console.log('🔍 Home: SDK context:', context)
           if (context?.user?.username) {
+            console.log('✅ Home: Setting username:', context.user.username)
             setCurrentUserUsername(context.user.username)
+          } else {
+            console.warn('⚠️ Home: Username not found')
           }
         }
-      } catch {}
+      } catch (error) {
+        console.error('❌ Home: Error getting user data:', error)
+      }
     }
     getUserData()
   }, [])
@@ -103,3 +110,4 @@ export default function Home() {
     </main>
   )
 }
+

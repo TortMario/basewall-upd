@@ -65,14 +65,15 @@ export function Post({
   const currentUserIsAdmin = normalizedUsername === normalizedAdminUsername || 
                               (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
   
-  // Debug: log admin check (only in development)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('Admin check:', {
+  // Debug: log admin check (always log for debugging)
+  if (typeof window !== 'undefined') {
+    console.log('🔍 Admin check:', {
       currentUserUsername,
       normalizedUsername,
       ADMIN_USERNAME,
       normalizedAdminUsername,
-      isAdmin: currentUserIsAdmin
+      isAdmin: currentUserIsAdmin,
+      env: process.env.NODE_ENV
     })
   }
   
@@ -283,7 +284,7 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ml-[-60px]`} style={{ 
+            } ml-[-65px]`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',

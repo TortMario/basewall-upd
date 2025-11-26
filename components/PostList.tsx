@@ -24,20 +24,32 @@ export function PostList({ onEdit }: PostListProps) {
     const getUserData = async () => {
       try {
         const isInMiniApp = await sdk.isInMiniApp()
+        console.log('🔍 SDK check:', { isInMiniApp })
         if (isInMiniApp) {
           const context = await sdk.context
+          console.log('🔍 SDK context:', context)
           if (context?.user) {
+            console.log('🔍 SDK user:', context.user)
             if (context.user.fid) {
               setCurrentUserFid(context.user.fid)
             }
             if (context.user.username) {
+              console.log('✅ Setting username:', context.user.username)
               setCurrentUserUsername(context.user.username)
+            } else {
+              console.warn('⚠️ Username not found in SDK context')
             }
+          } else {
+            console.warn('⚠️ User not found in SDK context')
           }
           // Note: Address is not available in SDK context, admin check will use username
           // Address can be obtained from wallet connection if needed in the future
+        } else {
+          console.warn('⚠️ Not in Mini App context')
         }
-      } catch {}
+      } catch (error) {
+        console.error('❌ Error getting user data:', error)
+      }
     }
     getUserData()
   }, [])
