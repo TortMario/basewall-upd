@@ -58,7 +58,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
         } else if (secondsLeft > 0) {
           throw new Error(`You can post again in ${secondsLeft} second${secondsLeft > 1 ? 's' : ''}`)
         } else {
-          throw new Error('You can only post once per 15 minutes')
+          throw new Error('You can only post once per 5 minutes')
         }
       }
 

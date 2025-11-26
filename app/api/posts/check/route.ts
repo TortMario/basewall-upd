@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
     const lastPostTime = new Date(lastPost.createdAt).getTime()
     const now = Date.now()
     const timeSinceLastPost = now - lastPostTime
-    const minutes15 = 15 * 60 * 1000
+    const minutes5 = 5 * 60 * 1000
 
-    if (timeSinceLastPost >= minutes15) {
+    if (timeSinceLastPost >= minutes5) {
       return NextResponse.json({ canPost: true, lastPostTime: lastPost.createdAt, minutesLeft: 0, secondsLeft: 0 })
     }
 
-    const timeRemaining = minutes15 - timeSinceLastPost
+    const timeRemaining = minutes5 - timeSinceLastPost
     const minutesLeft = Math.floor(timeRemaining / (60 * 1000))
     const secondsLeft = Math.floor((timeRemaining % (60 * 1000)) / 1000)
 

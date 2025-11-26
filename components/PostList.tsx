@@ -83,7 +83,7 @@ export function PostList({ onEdit }: PostListProps) {
     }
   }, [walletAddress, isConnected])
 
-  const loadPosts = useCallback(async (currentOffset: number, append = false) => {
+  const loadPosts = useCallback(async (currentOffset: number, append = false, checkNewOnly = false) => {
     try {
       const response = await fetch(`/api/posts?limit=20&offset=${currentOffset}`)
       const data = await response.json()
@@ -100,7 +100,18 @@ export function PostList({ onEdit }: PostListProps) {
         return
       }
 
-      if (append) {
+      if (checkNewOnly) {
+        // For live updates: only add posts that don't exist yet
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map(p => p.id))
+          const trulyNew = newPosts.filter(p => !existingIds.has(p.id))
+          if (trulyNew.length > 0) {
+            // Add new posts at the beginning (newest first)
+            return [...trulyNew, ...prev]
+          }
+          return prev
+        })
+      } else if (append) {
         setPosts((prev) => [...prev, ...newPosts])
       } else {
         setPosts(newPosts)
@@ -131,6 +142,34 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     loadPosts(0, false)
   }, [loadPosts])
+
+  // Live updates: check for new posts every 5 seconds
+  useEffect(() => {
+    if (loading) return // Don't poll while initial load is happening
+    
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/posts?limit=20&offset=0`)
+        const data = await response.json()
+        
+        if (response.ok && data.posts) {
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map(p => p.id))
+            const trulyNew = data.posts.filter((p: PostType) => !existingIds.has(p.id))
+            if (trulyNew.length > 0) {
+              // Add new posts at the beginning (newest first)
+              return [...trulyNew, ...prev]
+            }
+            return prev
+          })
+        }
+      } catch (error) {
+        console.error('Error checking for new posts:', error)
+      }
+    }, 5000) // Check every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [loading])
 
   useEffect(() => {
     const target = observerTarget.current

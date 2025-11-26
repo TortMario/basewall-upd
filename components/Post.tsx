@@ -304,24 +304,6 @@ export function Post({
               paddingBottom: '35px',
               paddingLeft: '10px'
             }}>
-              {canEdit && !isEditing && (
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <button
-                    onClick={handleEditClick}
-                    className="text-gray-600 hover:text-black text-sm px-2 py-1"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
-                  >
-                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
-                  </button>
-                </div>
-              )}
-              
               {currentUserIsAdmin && !canEdit && (
                 <div className="absolute top-2 right-2">
                   <button
@@ -379,54 +361,73 @@ export function Post({
             }`}></div>
           </div>
 
-          {!isAuthor && (
-            <div className="flex items-center justify-end gap-3 mt-1 overflow-visible relative z-10">
-              <button
-                onClick={() => onReaction(post.id, 'like')}
-                className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
-                  userReaction === 'like'
-                    ? 'text-yellow-500'
-                    : 'text-gray-600 hover:text-yellow-500'
-                }`}
-              >
-                <span className="text-lg">👍</span>
-                <span className="font-bold">{post.likes}</span>
-              </button>
-              <button
-                onClick={() => onReaction(post.id, 'dislike')}
-                className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
-                  userReaction === 'dislike'
-                    ? 'text-red-500'
-                    : 'text-gray-600 hover:text-red-500'
-                }`}
-              >
-                <span className="text-lg">👎</span>
-                <span className="font-bold">{post.dislikes}</span>
-              </button>
-              {currentUserIsAdmin && (
-                <>
-                  <button
-                    onClick={handleHighlight}
-                    disabled={isHighlighting}
-                    className={`flex items-center gap-1.5 text-base disabled:opacity-50 font-bold transition-colors ${
-                      isHighlighted ? 'text-yellow-600' : 'text-gray-400 hover:text-yellow-500'
-                    }`}
-                    title={isHighlighted ? 'Remove highlight' : 'Highlight post (gold)'}
-                  >
-                    <span className="text-xl">{isHighlighting ? '...' : '⭐'}</span>
-                  </button>
-                  <button
-                    onClick={handleHide}
-                    disabled={isHiding}
-                    className="flex items-center gap-1.5 text-base disabled:opacity-50 font-bold text-gray-500 hover:text-gray-700 transition-colors"
-                    title="Hide post (moderation)"
-                  >
-                    <span className="text-xl">{isHiding ? '...' : '👁️'}</span>
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          <div className="flex items-center justify-end gap-3 mt-1 overflow-visible relative z-10">
+            {!isAuthor && (
+              <>
+                <button
+                  onClick={() => onReaction(post.id, 'like')}
+                  className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
+                    userReaction === 'like'
+                      ? 'text-yellow-500'
+                      : 'text-gray-600 hover:text-yellow-500'
+                  }`}
+                >
+                  <span className="text-lg">👍</span>
+                  <span className="font-bold">{post.likes}</span>
+                </button>
+                <button
+                  onClick={() => onReaction(post.id, 'dislike')}
+                  className={`flex items-center gap-1.5 text-sm transition-colors whitespace-nowrap ${
+                    userReaction === 'dislike'
+                      ? 'text-red-500'
+                      : 'text-gray-600 hover:text-red-500'
+                  }`}
+                >
+                  <span className="text-lg">👎</span>
+                  <span className="font-bold">{post.dislikes}</span>
+                </button>
+              </>
+            )}
+            {canEdit && !isEditing && (
+              <>
+                <button
+                  onClick={handleEditClick}
+                  className="text-gray-600 hover:text-black text-sm px-2 py-1"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
+                >
+                  {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
+                </button>
+              </>
+            )}
+            {currentUserIsAdmin && (
+              <>
+                <button
+                  onClick={handleHighlight}
+                  disabled={isHighlighting}
+                  className={`flex items-center gap-1.5 text-base disabled:opacity-50 font-bold transition-colors ${
+                    isHighlighted ? 'text-yellow-600' : 'text-gray-400 hover:text-yellow-500'
+                  }`}
+                  title={isHighlighted ? 'Remove highlight' : 'Highlight post (gold)'}
+                >
+                  <span className="text-xl">{isHighlighting ? '...' : '⭐'}</span>
+                </button>
+                <button
+                  onClick={handleHide}
+                  disabled={isHiding}
+                  className="flex items-center gap-1.5 text-base disabled:opacity-50 font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Hide post (moderation)"
+                >
+                  <span className="text-xl">{isHiding ? '...' : '👁️'}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -45,15 +45,15 @@ export async function POST(request: NextRequest) {
       const lastPostTime = new Date(lastPost.createdAt).getTime()
       const now = Date.now()
       const timeSinceLastPost = now - lastPostTime
-      const minutes15 = 15 * 60 * 1000
+      const minutes5 = 5 * 60 * 1000
 
-      if (timeSinceLastPost < minutes15) {
-        const timeRemaining = minutes15 - timeSinceLastPost
+      if (timeSinceLastPost < minutes5) {
+        const timeRemaining = minutes5 - timeSinceLastPost
         const minutesLeft = Math.floor(timeRemaining / (60 * 1000))
         const secondsLeft = Math.floor((timeRemaining % (60 * 1000)) / 1000)
         
         return NextResponse.json({ 
-          error: 'You can only post once per 15 minutes',
+          error: 'You can only post once per 5 minutes',
           minutesLeft,
           secondsLeft,
         }, { status: 429 })
