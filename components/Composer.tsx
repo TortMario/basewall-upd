@@ -101,7 +101,7 @@ export function Composer({ onPostCreated }: ComposerProps) {
             setError(null)
           }}
           placeholder="What's on your mind?"
-          className="w-full bg-transparent text-white placeholder-pixel-light resize-none outline-none mb-3"
+          className="w-full bg-transparent text-white placeholder-pixel-light resize-none outline-none mb-3 text-base"
           rows={4}
           maxLength={280}
           disabled={isSubmitting}
@@ -109,17 +109,17 @@ export function Composer({ onPostCreated }: ComposerProps) {
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className={`text-xs ${remainingChars < 20 ? 'text-red-500' : 'text-pixel-light'}`}>
+            <span className={`text-sm ${remainingChars < 20 ? 'text-red-500' : 'text-pixel-light'}`}>
               {remainingChars}
             </span>
-            {error && <span className="text-xs text-red-500">{error}</span>}
-            {isSubmitting && <span className="text-xs text-pixel-teal">Creating post...</span>}
+            {error && <span className="text-sm text-red-500">{error}</span>}
+            {isSubmitting && <span className="text-sm text-pixel-teal">Creating post...</span>}
           </div>
           
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`px-4 py-2 rounded border-2 font-bold transition-colors ${
+            className={`px-4 py-2 rounded border-2 font-bold transition-colors text-base ${
               canSubmit
                 ? 'bg-pixel-yellow text-pixel-dark border-pixel-dark hover:bg-pixel-yellow/80'
                 : 'bg-pixel-gray text-pixel-light border-pixel-dark cursor-not-allowed'

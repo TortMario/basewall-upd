@@ -161,8 +161,8 @@ export function Post({
   }
 
   return (
-    <div className="bg-pixel-gray border-2 border-pixel-dark rounded-lg p-4 mb-4">
-      <div className="flex items-start gap-3 mb-3">
+    <div className="mb-6">
+      <div className="flex items-start gap-3 mb-2">
         <button
           onClick={handleProfileClick}
           className="flex-shrink-0 hover:opacity-80 transition-opacity"
@@ -173,82 +173,86 @@ export function Post({
             size="md"
           />
         </button>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-white">
+            <span className="font-bold text-gray-900 text-lg">
               {author?.displayName || author?.username || `User ${post.authorAddress.slice(0, 6)}`}
             </span>
-            <span className="text-xs text-pixel-light">{formatDate(post.createdAt)}</span>
+            <span className="text-sm text-gray-500">{formatDate(post.createdAt)}</span>
           </div>
-          {isEditing ? (
-            <div className="mt-2">
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full bg-pixel-dark border border-pixel-light rounded p-2 text-white resize-none"
-                rows={3}
-                maxLength={280}
-              />
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={handleEditSave}
-                  className="px-3 py-1 bg-pixel-yellow text-pixel-dark rounded font-bold text-sm hover:bg-pixel-yellow/80"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleEditCancel}
-                  className="px-3 py-1 bg-pixel-gray border border-pixel-light text-white rounded font-bold text-sm hover:bg-pixel-dark"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-white whitespace-pre-wrap break-words">{post.text}</p>
-          )}
         </div>
+      </div>
+
+      <div className="bg-pixel-gray border-2 border-pixel-dark rounded-lg p-4 relative">
         {canEdit && !isEditing && (
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="absolute top-2 right-2 flex gap-2">
             <button
               onClick={handleEditClick}
-              className="text-pixel-light hover:text-white text-sm"
+              className="text-pixel-light hover:text-white text-sm px-2 py-1"
             >
               Edit
             </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="text-red-500 hover:text-red-400 text-sm disabled:opacity-50"
+              className="text-red-500 hover:text-red-400 text-sm disabled:opacity-50 px-2 py-1"
             >
               {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
             </button>
           </div>
         )}
+
+        {isEditing ? (
+          <div>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="w-full bg-pixel-dark border border-pixel-light rounded p-3 text-white resize-none text-base"
+              rows={4}
+              maxLength={280}
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={handleEditSave}
+                className="px-4 py-2 bg-pixel-yellow text-pixel-dark rounded font-bold hover:bg-pixel-yellow/80"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleEditCancel}
+                className="px-4 py-2 bg-pixel-gray border border-pixel-light text-white rounded font-bold hover:bg-pixel-dark"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-white text-base leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+        )}
       </div>
 
-      <div className="flex items-center gap-4 pt-3 border-t border-pixel-dark">
+      <div className="flex items-center justify-end gap-4 mt-2">
         <button
           onClick={() => onReaction(post.id, 'like')}
-          className={`flex items-center gap-1 text-sm transition-colors ${
+          className={`flex items-center gap-2 text-lg transition-colors ${
             userReaction === 'like'
               ? 'text-pixel-yellow'
               : 'text-pixel-light hover:text-pixel-yellow'
           }`}
         >
-          <span>👍</span>
-          <span>{post.likes}</span>
+          <span className="text-2xl">👍</span>
+          <span className="font-bold">{post.likes}</span>
         </button>
         <button
           onClick={() => onReaction(post.id, 'dislike')}
-          className={`flex items-center gap-1 text-sm transition-colors ${
+          className={`flex items-center gap-2 text-lg transition-colors ${
             userReaction === 'dislike'
               ? 'text-red-500'
               : 'text-pixel-light hover:text-red-500'
           }`}
         >
-          <span>👎</span>
-          <span>{post.dislikes}</span>
+          <span className="text-2xl">👎</span>
+          <span className="font-bold">{post.dislikes}</span>
         </button>
       </div>
     </div>
