@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const userPosts = allPosts.filter((post) => post.author?.fid === fid)
 
     if (userPosts.length === 0) {
-      return NextResponse.json({ canPost: true, lastPostTime: null, hoursLeft: 0, minutesLeft: 0 })
+      return NextResponse.json({ canPost: true, lastPostTime: null, minutesLeft: 0, secondsLeft: 0 })
     }
 
     const lastPost = userPosts.reduce((latest, post) => {
