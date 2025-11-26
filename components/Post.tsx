@@ -319,36 +319,16 @@ export function Post({
                 </div>
               )}
               
-              {currentUserIsAdmin && (
-                <div className="absolute top-2 right-2 flex gap-2 items-center">
+              {currentUserIsAdmin && !canEdit && (
+                <div className="absolute top-2 right-2">
                   <button
-                    onClick={handleHighlight}
-                    disabled={isHighlighting}
-                    className={`text-sm disabled:opacity-50 px-2 py-1 font-bold transition-colors ${
-                      isHighlighted ? 'text-yellow-600' : 'text-gray-400 hover:text-yellow-500'
-                    }`}
-                    title={isHighlighted ? 'Remove highlight' : 'Highlight post (gold)'}
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
+                    title="Admin: Delete any post"
                   >
-                    {isHighlighting ? '...' : '⭐'}
+                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
                   </button>
-                  <button
-                    onClick={handleHide}
-                    disabled={isHiding}
-                    className="text-gray-500 hover:text-gray-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
-                    title="Hide post (moderation)"
-                  >
-                    {isHiding ? '...' : '👁️'}
-                  </button>
-                  {!canEdit && (
-                    <button
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
-                      title="Admin: Delete any post"
-                    >
-                      {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -381,10 +361,10 @@ export function Post({
               )}
             </div>
             
-            <div className={`absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
+            <div className={`absolute left-0 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
               isAuthor ? 'border-r-lime-100' : isHighlighted ? 'border-r-yellow-200' : 'border-r-white'
             }`}></div>
-            <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
+            <div className={`absolute -left-2 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
               isHighlighted ? 'border-r-yellow-400' : 'border-r-black'
             }`}></div>
           </div>
@@ -413,6 +393,28 @@ export function Post({
                 <span className="text-lg">👎</span>
                 <span className="font-bold">{post.dislikes}</span>
               </button>
+              {currentUserIsAdmin && (
+                <>
+                  <button
+                    onClick={handleHighlight}
+                    disabled={isHighlighting}
+                    className={`flex items-center gap-1.5 text-base disabled:opacity-50 font-bold transition-colors ${
+                      isHighlighted ? 'text-yellow-600' : 'text-gray-400 hover:text-yellow-500'
+                    }`}
+                    title={isHighlighted ? 'Remove highlight' : 'Highlight post (gold)'}
+                  >
+                    <span className="text-xl">{isHighlighting ? '...' : '⭐'}</span>
+                  </button>
+                  <button
+                    onClick={handleHide}
+                    disabled={isHiding}
+                    className="flex items-center gap-1.5 text-base disabled:opacity-50 font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                    title="Hide post (moderation)"
+                  >
+                    <span className="text-xl">{isHiding ? '...' : '👁️'}</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
