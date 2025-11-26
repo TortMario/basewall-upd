@@ -176,7 +176,7 @@ export function Post({
         >
           <AvatarName
             author={author}
-            address={post.authorAddress}
+            address={post.authorAddress || undefined}
             size="md"
           />
         </button>
