@@ -269,9 +269,12 @@ export function Post({
   }
 
   const isAuthor = canEdit
+  const isHidden = post.isHidden || false
+  const isAuthorOfHiddenPost = isAuthor && isHidden
+  const isAdminViewingHidden = currentUserIsAdmin && isHidden && !isAuthor
 
   return (
-    <div className="mb-6">
+    <div className={`mb-6 ${isAdminViewingHidden ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-3">
         <div className="flex flex-col items-center">
           <button
@@ -295,7 +298,7 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ml-[-65px]`} style={{ 
+            } ml-[-65px] ${isAuthorOfHiddenPost ? 'border-gray-400' : ''}`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',
@@ -357,7 +360,14 @@ export function Post({
                   </div>
                 </div>
               ) : (
-                <p className="text-black text-sm leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+                <div className="relative">
+                  {isAuthorOfHiddenPost && (
+                    <div className="absolute -top-2 -right-2 bg-gray-400 text-white rounded-full p-1 text-xs" title="This post is hidden">
+                      🔒
+                    </div>
+                  )}
+                  <p className="text-black text-sm leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+                </div>
               )}
             </div>
             

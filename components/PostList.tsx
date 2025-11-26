@@ -198,6 +198,18 @@ export function PostList({ onEdit }: PostListProps) {
     setPosts((prev) => prev.map((post) => post.id === updatedPost.id ? updatedPost : post))
   }
 
+  // Check if current user is admin
+  const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
+  const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+  const ADMIN_FID = process.env.NEXT_PUBLIC_ADMIN_FID ? parseInt(process.env.NEXT_PUBLIC_ADMIN_FID, 10) : undefined
+  
+  const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
+  const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+  const isAdmin = 
+    (ADMIN_FID && currentUserFid === ADMIN_FID) ||
+    normalizedUsername === normalizedAdminUsername || 
+    (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+
   if (loading && posts.length === 0) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -206,9 +218,20 @@ export function PostList({ onEdit }: PostListProps) {
     )
   }
 
+  // Filter posts: show hidden posts only to admin or author
+  const visiblePosts = posts.filter((post) => {
+    if (!post.isHidden) return true
+    // Show hidden post to admin
+    if (isAdmin) return true
+    // Show hidden post to author
+    if (currentUserFid && post.author?.fid === currentUserFid) return true
+    // Hide from everyone else
+    return false
+  })
+
   return (
     <div>
-      {posts.map((post) => (
+      {visiblePosts.map((post) => (
         <Post
           key={post.id}
           post={post}
