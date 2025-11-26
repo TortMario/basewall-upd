@@ -22,7 +22,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-white p-4 max-w-2xl mx-auto">
+    <main className="min-h-screen bg-gray-100 p-4 max-w-2xl mx-auto">
       <header className="mb-6 text-center">
         <a 
           href="https://base.app/profile/mynameisthe" 

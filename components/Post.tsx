@@ -188,10 +188,10 @@ export function Post({
             {formatDate(post.createdAt)}
           </div>
           
-          <div className="mt-8 relative">
-            <div className={`border-3 border-black rounded-lg shadow-lg relative -mt-[5px] ${
+          <div className="mt-[-32px] relative">
+            <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
-            }`} style={{ padding: '35px' }}>
+            } ${canEdit ? 'scale-110 ml-[-20px]' : ''}`} style={{ padding: canEdit ? '38.5px' : '35px' }}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
                   <button
