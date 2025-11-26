@@ -241,7 +241,7 @@ export function Post({
             {formatDate(post.createdAt)}
           </div>
           
-          <div className="mt-[28px] relative">
+          <div className="mt-2 relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
