@@ -65,7 +65,10 @@ export async function DELETE(
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
     const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
     // Check admin by username or address (current user's address, not post author's)
-    const isAdmin = usernameParam === ADMIN_USERNAME || 
+    // Normalize username: remove @ prefix and compare case-insensitive
+    const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
+    const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+    const isAdmin = normalizedUsername === normalizedAdminUsername || 
                     addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
     
     if (post.author?.fid !== fid && !isAdmin) {

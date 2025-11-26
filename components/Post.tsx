@@ -59,8 +59,23 @@ export function Post({
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
   // Check admin by username or address (current user's address, not post author's)
-  const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME || 
+  // Normalize username: remove @ prefix and compare case-insensitive
+  const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
+  const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+  const currentUserIsAdmin = normalizedUsername === normalizedAdminUsername || 
                               (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  
+  // Debug: log admin check (only in development)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('Admin check:', {
+      currentUserUsername,
+      normalizedUsername,
+      ADMIN_USERNAME,
+      normalizedAdminUsername,
+      isAdmin: currentUserIsAdmin
+    })
+  }
+  
   const isHighlighted = post.isHighlighted || false
 
   const handleDelete = async () => {
@@ -262,7 +277,7 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ml-[-80px]`} style={{ 
+            } ml-[-75px]`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',

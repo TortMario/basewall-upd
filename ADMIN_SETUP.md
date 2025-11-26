@@ -24,10 +24,7 @@
 
    **Пример:**
    ```
-   ADMIN_USERNAME=mynameisthe
-   ADMIN_ADDRESS=0xCdBBdba01063a3A82f1D72Fb601fedFCff808183
-   NEXT_PUBLIC_ADMIN_USERNAME=mynameisthe
-   NEXT_PUBLIC_ADMIN_ADDRESS=0xCdBBdba01063a3A82f1D72Fb601fedFCff808183
+ 
    ```
 
 4. **Установите переменные для всех окружений:**

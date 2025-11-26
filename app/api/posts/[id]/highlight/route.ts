@@ -20,7 +20,10 @@ export async function PUT(
     }
 
     // Check admin by username or address (current user's credentials)
-    const isAdmin = usernameParam === ADMIN_USERNAME || 
+    // Normalize username: remove @ prefix and compare case-insensitive
+    const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
+    const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+    const isAdmin = normalizedUsername === normalizedAdminUsername || 
                     addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
 
     if (!isAdmin) {
