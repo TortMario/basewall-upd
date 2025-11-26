@@ -114,11 +114,17 @@ export function PostList({ onEdit }: PostListProps) {
         setPosts(newPosts)
       }
 
-      if (currentUserFid) {
+      // Only fetch reactions if we have a valid FID (positive integer)
+      if (currentUserFid && currentUserFid > 0) {
         const reactionPromises = newPosts.map((post: PostType) =>
           fetch(`/api/reactions?postId=${post.id}&fid=${currentUserFid}`)
-            .then((res) => res.json())
-            .then((data) => ({ postId: post.id, reaction: data.reaction }))
+            .then((res) => {
+              if (!res.ok) {
+                // Don't throw, just return null reaction
+                return { postId: post.id, reaction: null }
+              }
+              return res.json().then((data) => ({ postId: post.id, reaction: data.reaction }))
+            })
             .catch(() => ({ postId: post.id, reaction: null }))
         )
         const reactions = await Promise.all(reactionPromises)

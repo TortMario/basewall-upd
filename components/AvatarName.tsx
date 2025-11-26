@@ -38,16 +38,21 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
     lg: 'w-20 h-20 text-sm',
   }
 
+  // Truncate display name to 15 characters max
+  const truncatedName = displayName && displayName.length > 15 
+    ? `${displayName.slice(0, 15)}...` 
+    : displayName
+
   return (
     <div
-      className="flex items-start gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+      className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
       onClick={onClick}
     >
       <div className={`pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 ${sizeClasses[size]} flex items-center justify-center`}>
         {pfp ? (
           <Image 
             src={pfp}
-            alt={displayName || 'Avatar'}
+            alt={truncatedName || 'Avatar'}
             width={size === 'sm' ? 48 : size === 'lg' ? 80 : 64}
             height={size === 'sm' ? 48 : size === 'lg' ? 80 : 64}
             className="w-full h-full object-cover"
@@ -59,8 +64,10 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
           </div>
         )}
       </div>
-      {displayName && (
-        <span className="text-sm text-black font-semibold pt-0 leading-tight">{displayName}</span>
+      {truncatedName && (
+        <span className="text-sm text-black font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+          {truncatedName}
+        </span>
       )}
     </div>
   )
