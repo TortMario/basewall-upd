@@ -13,16 +13,16 @@ async function clearAllPosts() {
 
     // Get all posts
     const allPosts = await kv.getPosts(10000, 0)
-    console.log(`📋 Found ${allPosts.posts.length} posts`)
+    console.log(`📋 Found ${allPosts.length} posts`)
 
-    if (allPosts.posts.length === 0) {
+    if (allPosts.length === 0) {
       console.log('✅ No posts to delete')
       return
     }
 
     // Delete each post
     let deleted = 0
-    for (const post of allPosts.posts) {
+    for (const post of allPosts) {
       try {
         await kv.deletePost(post.id)
         deleted++
