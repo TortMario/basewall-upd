@@ -7,16 +7,18 @@ const REACTION_KEY_PREFIX = 'reaction:'
 
 export async function DELETE(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const usernameParam = searchParams.get('username')
-    
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
-    const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
-    const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
-    
-    if (normalizedUsername !== normalizedAdminUsername) {
-      return NextResponse.json({ error: 'Only admin can clear all posts' }, { status: 403 })
-    }
+    // TEMPORARY: Admin check disabled for clearing posts
+    // TODO: Re-enable admin check after clearing posts
+    // const searchParams = request.nextUrl.searchParams
+    // const usernameParam = searchParams.get('username')
+    // 
+    // const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
+    // const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
+    // const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+    // 
+    // if (normalizedUsername !== normalizedAdminUsername) {
+    //   return NextResponse.json({ error: 'Only admin can clear all posts' }, { status: 403 })
+    // }
 
     // Get all post IDs from sorted set
     const postIds = await kv.zrange(POSTS_KEY, 0, -1)

@@ -17,6 +17,7 @@
     "seed": "tsx scripts/seed.ts",
     "setup": "bash scripts/setup-env.sh",
     "clear:posts": "tsx scripts/clear-posts.ts",
+    "clear:all": "tsx scripts/clear-all-posts.ts",
     "delete:pending": "tsx scripts/delete-pending-posts.ts"
   },
   "dependencies": {

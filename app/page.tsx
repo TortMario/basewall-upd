@@ -75,10 +75,13 @@ export default function Home() {
     }
   }
 
-  const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
-  const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
-  const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
-  const isAdmin = normalizedUsername === normalizedAdminUsername
+  // TEMPORARY: Always show clear button (admin check disabled)
+  // TODO: Re-enable admin check after clearing posts
+  // const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
+  // const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
+  // const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+  // const isAdmin = normalizedUsername === normalizedAdminUsername
+  const isAdmin = true // Temporary: allow everyone to clear posts
 
   return (
     <main className="min-h-screen bg-gray-100 p-4 max-w-2xl mx-auto">
