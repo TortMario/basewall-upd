@@ -3,6 +3,7 @@ import * as kv from '@/lib/kv'
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
 const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+const ADMIN_FID = process.env.ADMIN_FID ? parseInt(process.env.ADMIN_FID, 10) : undefined
 
 export async function PUT(
   request: NextRequest,
@@ -13,21 +14,27 @@ export async function PUT(
     const searchParams = request.nextUrl.searchParams
     const usernameParam = searchParams.get('username')
     const addressParam = searchParams.get('address')
+    const fidParam = searchParams.get('fid')
+    const fid = fidParam ? parseInt(fidParam, 10) : undefined
 
     const post = await kv.getPost(id)
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    // Check admin by username or address (current user's credentials)
+    // Check admin by FID (most reliable), username, or address
     // Normalize username: remove @ prefix and compare case-insensitive
     const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
     const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
-    const isAdmin = normalizedUsername === normalizedAdminUsername || 
-                    addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+    const isAdmin = 
+      (ADMIN_FID && fid === ADMIN_FID) ||
+      normalizedUsername === normalizedAdminUsername || 
+      addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
 
     // Debug logging
     console.log('Admin check (hide):', {
+      fid,
+      ADMIN_FID,
       usernameParam,
       normalizedUsername,
       ADMIN_USERNAME,

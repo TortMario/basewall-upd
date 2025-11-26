@@ -37,6 +37,7 @@ interface PostProps {
 
 const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'mynameisthe'
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+const ADMIN_FID = process.env.NEXT_PUBLIC_ADMIN_FID ? parseInt(process.env.NEXT_PUBLIC_ADMIN_FID, 10) : undefined
 const ADMIN_PROFILE_URL = `https://base.app/profile/${ADMIN_USERNAME}`
 
 export function Post({
@@ -58,22 +59,30 @@ export function Post({
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
-  // Check admin by username or address (current user's address, not post author's)
+  
+  // Check admin by FID, username, or address
   // Normalize username: remove @ prefix and compare case-insensitive
   const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
   const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
-  const currentUserIsAdmin = normalizedUsername === normalizedAdminUsername || 
-                              (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  
+  // Check admin by FID (most reliable), username, or address
+  const currentUserIsAdmin = 
+    (ADMIN_FID && currentUserFid === ADMIN_FID) ||
+    normalizedUsername === normalizedAdminUsername || 
+    (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
   
   // Debug: log admin check (always log for debugging)
   if (typeof window !== 'undefined') {
     console.log('🔍 Admin check:', {
+      currentUserFid,
+      ADMIN_FID,
       currentUserUsername,
       normalizedUsername,
       ADMIN_USERNAME,
       normalizedAdminUsername,
-      isAdmin: currentUserIsAdmin,
-      env: process.env.NODE_ENV
+      currentUserAddress,
+      ADMIN_ADDRESS,
+      isAdmin: currentUserIsAdmin
     })
   }
   
@@ -189,6 +198,7 @@ export function Post({
     try {
       const params = new URLSearchParams({
         username: currentUserUsername || '',
+        ...(currentUserFid && { fid: currentUserFid.toString() }),
         ...(currentUserAddress && { address: currentUserAddress })
       })
       const response = await fetch(`/api/posts/${post.id}/highlight?${params.toString()}`, {
@@ -222,6 +232,7 @@ export function Post({
     try {
       const params = new URLSearchParams({
         username: currentUserUsername || '',
+        ...(currentUserFid && { fid: currentUserFid.toString() }),
         ...(currentUserAddress && { address: currentUserAddress })
       })
       const response = await fetch(`/api/posts/${post.id}/hide?${params.toString()}`, {

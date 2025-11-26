@@ -18,9 +18,13 @@
    ```
    ADMIN_USERNAME=ваш_username_в_farcaster
    ADMIN_ADDRESS=ваш_адрес_кошелька_base
+   ADMIN_FID=ваш_fid_номер
    NEXT_PUBLIC_ADMIN_USERNAME=ваш_username_в_farcaster
    NEXT_PUBLIC_ADMIN_ADDRESS=ваш_адрес_кошелька_base
+   NEXT_PUBLIC_ADMIN_FID=ваш_fid_номер
    ```
+   
+   **ВАЖНО:** FID - это самый надежный способ проверки админа, так как username может не получаться через SDK. Рекомендуется обязательно указать FID.
 
    **Пример:**
    ```
@@ -36,14 +40,20 @@
    - После добавления переменных, Vercel автоматически перезапустит деплоймент
    - Или вы можете вручную перезапустить: Deployments → ... → Redeploy
 
-### Как узнать свой username и адрес:
+### Как узнать свой username, FID и адрес:
 
-1. **Farcaster Username:**
+1. **Farcaster FID (ВАЖНО! Самый надежный способ):**
+   - Откройте Base App
+   - Ваш FID можно найти в URL вашего профиля: `https://base.app/profile/12345` (где 12345 - это ваш FID)
+   - Или откройте консоль браузера в Base App и выполните: `await sdk.context` - там будет `user.fid`
+   - FID - это число (например, `12345`)
+
+2. **Farcaster Username:**
    - Откройте Base App
    - Ваш username отображается в профиле (например, `@mynameisthe`)
    - Или проверьте на [base.app/profile/ваш_username](https://base.app)
 
-2. **Base Wallet Address:**
+3. **Base Wallet Address:**
    - Откройте Base App
    - Перейдите в настройки кошелька
    - Скопируйте ваш Base адрес (начинается с `0x`)
@@ -62,9 +72,10 @@
    - `ADMIN_USERNAME` и `NEXT_PUBLIC_ADMIN_USERNAME` должны иметь одинаковое значение
    - `ADMIN_ADDRESS` и `NEXT_PUBLIC_ADMIN_ADDRESS` должны иметь одинаковое значение
 
-2. **Проверка админа работает по:**
+2. **Проверка админа работает по (в порядке приоритета):**
+   - **FID** (самый надежный способ - рекомендуется обязательно указать)
    - Username (ваш Farcaster username)
-   - ИЛИ по адресу кошелька (ваш Base wallet address)
+   - Адрес кошелька (ваш Base wallet address)
 
 3. **После изменения переменных:**
    - Обязательно перезапустите деплоймент
