@@ -25,7 +25,7 @@ async function main() {
 
   // Get contract instance
   const OneStreamNFT = await ethers.getContractFactory("OneStreamNFT");
-  const contract = OneStreamNFT.attach(contractAddress);
+  const contract = OneStreamNFT.attach(contractAddress) as any; // Type assertion for contract methods
 
   // Check current token count
   const nextTokenId = await contract.nextTokenId();
@@ -45,9 +45,9 @@ async function main() {
     const receipt = await tx.wait();
     console.log("  ✅ Transaction confirmed in block:", receipt?.blockNumber);
 
-    // Get the minted token ID (should be nextTokenId - 1, since nextTokenId was incremented)
-    const newNextTokenId = await contract.nextTokenId();
-    const mintedTokenId = newNextTokenId - 1n;
+      // Get the minted token ID (should be nextTokenId - 1, since nextTokenId was incremented)
+      const newNextTokenId = await contract.nextTokenId() as bigint;
+      const mintedTokenId = newNextTokenId - 1n;
     
     console.log("\n" + "=".repeat(60));
     console.log("✅ Mint Successful!");
