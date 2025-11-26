@@ -245,7 +245,7 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            }`} style={{ 
+            } ${isAuthor ? 'ml-[-20px]' : ''}`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',
