@@ -8,7 +8,6 @@ const reactionSchema = z.object({
   fid: z.number().int().positive(),
 })
 
-// POST /api/reactions - Add or update reaction
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -29,15 +28,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
     }
-    console.error('POST /api/reactions error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// GET /api/reactions?postId=...&fid=... - Get user's reaction for a post
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -54,10 +48,8 @@ export async function GET(request: NextRequest) {
     }
 
     const reaction = await kv.getReaction(postId, fid)
-
     return NextResponse.json({ reaction: reaction?.type || null })
-  } catch (error) {
-    console.error('GET /api/reactions error:', error)
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

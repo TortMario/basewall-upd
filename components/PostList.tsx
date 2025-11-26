@@ -18,7 +18,6 @@ export function PostList({ onEdit }: PostListProps) {
   const [currentUserFid, setCurrentUserFid] = useState<number | undefined>(undefined)
   const observerTarget = useRef<HTMLDivElement>(null)
 
-  // Get current user fid from Base App
   useEffect(() => {
     const getUserFid = async () => {
       try {
@@ -29,9 +28,7 @@ export function PostList({ onEdit }: PostListProps) {
             setCurrentUserFid(context.user.fid)
           }
         }
-      } catch (error) {
-        console.warn('Failed to get user fid:', error)
-      }
+      } catch {}
     }
     getUserFid()
   }, [])
@@ -59,7 +56,6 @@ export function PostList({ onEdit }: PostListProps) {
         setPosts(newPosts)
       }
 
-      // Load reactions for current user (if fid is available)
       if (currentUserFid) {
         const reactionPromises = newPosts.map((post: PostType) =>
           fetch(`/api/reactions?postId=${post.id}&fid=${currentUserFid}`)
@@ -76,9 +72,8 @@ export function PostList({ onEdit }: PostListProps) {
           return updated
         })
       }
-    } catch (error) {
-      console.error('Failed to load posts:', error)
-    } finally {
+    } catch {}
+    finally {
       setLoading(false)
     }
   }, [currentUserFid])
@@ -142,9 +137,7 @@ export function PostList({ onEdit }: PostListProps) {
           return { ...prev, [postId]: type }
         })
       }
-    } catch (error) {
-      console.error('Reaction error:', error)
-    }
+    } catch {}
   }
 
   const handleDelete = (postId: string) => {
@@ -176,7 +169,6 @@ export function PostList({ onEdit }: PostListProps) {
       {loading && posts.length > 0 && (
         <div className="text-center py-4 text-blue-600">Loading more...</div>
       )}
-      {/* Extra space at the bottom for better scrolling experience */}
       <div className="h-32" />
     </div>
   )

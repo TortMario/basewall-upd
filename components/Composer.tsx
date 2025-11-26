@@ -11,7 +11,6 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastPostTime, setLastPostTime] = useState<number | null>(null)
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -21,7 +20,6 @@ export function Composer({ onPostCreated }: ComposerProps) {
     setError(null)
 
     try {
-      // Get user data from Base App via Mini App SDK
       let authorData = null
       let fid: number | null = null
       
@@ -37,12 +35,11 @@ export function Composer({ onPostCreated }: ComposerProps) {
               username: user.username || null,
               displayName: user.displayName || null,
               pfp: user.pfpUrl && user.pfpUrl.trim() !== '' ? user.pfpUrl : null,
-              address: user.custodyAddress || null, // Use custody address if available
+              address: user.custodyAddress || null,
             }
           }
         }
-      } catch (error) {
-        console.warn('Failed to get user data from Mini App SDK context:', error)
+      } catch {
         throw new Error('Please use Base App to create posts')
       }
 
@@ -50,7 +47,6 @@ export function Composer({ onPostCreated }: ComposerProps) {
         throw new Error('Unable to identify user. Please use Base App.')
       }
 
-      // Check if user can post (1 post per 24 hours)
       const checkResponse = await fetch(`/api/posts/check?fid=${fid}`)
       const checkData = await checkResponse.json()
       
@@ -66,17 +62,10 @@ export function Composer({ onPostCreated }: ComposerProps) {
         }
       }
 
-      // Create post
       const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text.trim(),
-          author: authorData,
-          fid: fid,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.trim(), author: authorData, fid }),
       })
 
       if (!response.ok) {
@@ -88,13 +77,11 @@ export function Composer({ onPostCreated }: ComposerProps) {
       
       if (result.id) {
         setText('')
-        setLastPostTime(Date.now())
         onPostCreated()
       } else {
         throw new Error('Invalid response from server')
       }
     } catch (error) {
-      console.error('Post creation error:', error)
       setError(error instanceof Error ? error.message : 'Failed to create post')
     } finally {
       setIsSubmitting(false)
@@ -125,12 +112,8 @@ export function Composer({ onPostCreated }: ComposerProps) {
             <span className={`text-xs ${remainingChars < 20 ? 'text-red-500' : 'text-pixel-light'}`}>
               {remainingChars}
             </span>
-            {error && (
-              <span className="text-xs text-red-500">{error}</span>
-            )}
-            {isSubmitting && (
-              <span className="text-xs text-pixel-teal">Creating post...</span>
-            )}
+            {error && <span className="text-xs text-red-500">{error}</span>}
+            {isSubmitting && <span className="text-xs text-pixel-teal">Creating post...</span>}
           </div>
           
           <button

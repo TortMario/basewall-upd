@@ -73,7 +73,6 @@ export function Post({
 
       onDelete(post.id)
     } catch (error) {
-      console.error('Delete error:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete post')
     } finally {
       setIsDeleting(false)
@@ -84,7 +83,6 @@ export function Post({
   const handleProfileClick = async () => {
     try {
       const isInMiniApp = await sdk.isInMiniApp()
-      // Use Base App profile URL format: https://base.app/profile/{username or fid}
       const profileUrl = author?.username 
         ? `https://base.app/profile/${author.username}`
         : author?.fid
@@ -96,8 +94,7 @@ export function Post({
       } else {
         window.open(profileUrl, '_blank')
       }
-    } catch (error) {
-      console.warn('Failed to open profile URL:', error)
+    } catch {
       const profileUrl = author?.username 
         ? `https://base.app/profile/${author.username}`
         : author?.fid
@@ -127,9 +124,7 @@ export function Post({
     try {
       const response = await fetch(`/api/posts/${post.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: editText, fid: currentUserFid }),
       })
 
@@ -138,11 +133,9 @@ export function Post({
         throw new Error(errorData.error || 'Failed to update post')
       }
 
-      const updated = await response.json()
       setIsEditing(false)
       onEdit({ ...post, text: editText })
     } catch (error) {
-      console.error('Edit error:', error)
       alert(error instanceof Error ? error.message : 'Failed to update post')
     }
   }
@@ -185,9 +178,7 @@ export function Post({
             <span className="font-bold text-white">
               {author?.displayName || author?.username || `User ${post.authorAddress.slice(0, 6)}`}
             </span>
-            <span className="text-xs text-pixel-light">
-              {formatDate(post.createdAt)}
-            </span>
+            <span className="text-xs text-pixel-light">{formatDate(post.createdAt)}</span>
           </div>
           {isEditing ? (
             <div className="mt-2">

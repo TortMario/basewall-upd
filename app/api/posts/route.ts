@@ -20,39 +20,20 @@ const createPostSchema = z.object({
   ]).optional(),
 })
 
-// POST /api/posts - Create a new post
 export async function POST(request: NextRequest) {
   try {
-    // Check KV connection
     if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
       return NextResponse.json({ 
         error: 'Database not configured',
-        hint: 'KV_REST_API_URL and KV_REST_API_TOKEN must be set'
       }, { status: 500 })
     }
 
     const body = await request.json()
-    
-    let validatedData
-    try {
-      validatedData = createPostSchema.parse(body)
-    } catch (validationError) {
-      if (validationError instanceof z.ZodError) {
-        return NextResponse.json({ 
-          error: 'Invalid input', 
-          details: validationError.errors 
-        }, { status: 400 })
-      }
-      throw validationError
-    }
-    
+    const validatedData = createPostSchema.parse(body)
     const { text, fid, author } = validatedData
 
-    // Check if user can post (1 post per 24 hours)
     const allPosts = await kv.getPosts(1000, 0)
-    const userPosts = allPosts.filter(
-      (post) => post.author?.fid === fid
-    )
+    const userPosts = allPosts.filter((post) => post.author?.fid === fid)
 
     if (userPosts.length > 0) {
       const lastPost = userPosts.reduce((latest, post) => {
@@ -79,64 +60,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Clean up author data - remove null/empty values
     const cleanedAuthor = author ? {
       fid: author.fid ?? fid,
       username: author.username || undefined,
       displayName: author.displayName || undefined,
       pfp: author.pfp && author.pfp.trim() !== '' ? author.pfp : undefined,
       address: author.address || undefined,
-    } : {
-      fid,
-    }
+    } : { fid }
 
     const newPost = await kv.createPost({
       text,
-      authorAddress: author?.address || `fid:${fid}`, // Use fid-based address if no address
+      authorAddress: author?.address || `fid:${fid}`,
       author: cleanedAuthor,
       likes: 0,
       dislikes: 0,
     })
 
-    return NextResponse.json({
-      id: newPost.id,
-      status: 'created',
-    })
+    return NextResponse.json({ id: newPost.id, status: 'created' })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 })
     }
-    console.error('POST /api/posts error:', error)
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
 
-// GET /api/posts - Get posts with pagination
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    // Get all posts
     const allPosts = await kv.getPosts(1000, 0)
-    
-    // Sort by createdAt ascending (oldest first)
     allPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    
-    // Apply pagination
     const paginatedPosts = allPosts.slice(offset, offset + limit)
 
     return NextResponse.json({ posts: paginatedPosts, total: allPosts.length })
-  } catch (error) {
-    console.error('GET /api/posts error:', error)
-    return NextResponse.json({ 
-      posts: [],
-      error: 'Failed to fetch posts',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    })
+  } catch {
+    return NextResponse.json({ posts: [], error: 'Failed to fetch posts' })
   }
 }
