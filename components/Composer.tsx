@@ -217,9 +217,18 @@ export function Composer({ onPostCreated }: ComposerProps) {
   const [pendingPostId, setPendingPostId] = useState<string | null>(null)
   // Store direct transaction hash (for fallback method)
   const [directTxHash, setDirectTxHash] = useState<`0x${string}` | null>(null)
+  // Flag to prevent duplicate transaction processing
+  const [isProcessingTx, setIsProcessingTx] = useState(false)
 
   // Helper function to process transaction success (declared early for use in useEffect)
   const processTransactionSuccess = useCallback(async (txHash: `0x${string}`, postId: string) => {
+    // Prevent duplicate processing
+    if (isProcessingTx) {
+      console.log('Transaction already being processed, skipping...')
+      return
+    }
+    
+    setIsProcessingTx(true)
     try {
       console.log('Processing transaction success for hash:', txHash)
       const { createPublicClient, http, parseEventLogs } = await import('viem')
@@ -284,13 +293,15 @@ export function Composer({ onPostCreated }: ComposerProps) {
       setText('')
       setIsSubmitting(false)
       setPendingPostId(null)
+      setIsProcessingTx(false)
       onPostCreated()
       setTimeout(() => setMintStatus('idle'), 2000)
     } catch (error) {
       console.error('Failed to process transaction success:', error)
+      setIsProcessingTx(false)
       throw error
     }
-  }, [onPostCreated])
+  }, [onPostCreated, isProcessingTx])
 
   // Fallback: Direct ethereum transaction via window.ethereum
   const mintViaDirectCall = useCallback(async (to: Address, tokenURI: string): Promise<string> => {
@@ -421,102 +432,19 @@ export function Composer({ onPostCreated }: ComposerProps) {
     }
   }, [receiptError, mintStatus])
 
-  // Handle transaction confirmation
+  // Handle transaction confirmation (wagmi hook) - use processTransactionSuccess to avoid duplication
   useEffect(() => {
-    if (isSuccess && mintStatus === 'minting' && hash && pendingPostId) {
-      const extractTokenId = async () => {
-        try {
-          console.log('Transaction confirmed, extracting tokenId from hash:', hash)
-          const { createPublicClient, http, parseEventLogs } = await import('viem')
-          const { base, baseSepolia } = await import('wagmi/chains')
-          const { contractAddress, contractABI } = await import('@/lib/onchain')
-          
-          const chain = process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
-            ? baseSepolia
-            : base
-
-          const rpcUrl = typeof window !== 'undefined'
-            ? (process.env.NEXT_PUBLIC_BASE_RPC_URL || (isMainnet ? 'https://mainnet.base.org' : 'https://sepolia.base.org'))
-            : (isMainnet ? 'https://mainnet.base.org' : 'https://sepolia.base.org')
-          
-          const client = createPublicClient({
-            chain,
-            transport: http(rpcUrl),
-          })
-
-          console.log('Fetching transaction receipt...')
-          const receipt = await client.getTransactionReceipt({ hash })
-          console.log('Transaction receipt received:', receipt)
-          
-          // Try to parse Transfer event to get tokenId
-          let tokenId: number | null = null
-          try {
-            const parsed = parseEventLogs({
-              abi: contractABI,
-              logs: receipt.logs,
-              eventName: 'Transfer',
-            })
-            console.log('Parsed Transfer events:', parsed)
-            if (parsed.length > 0 && parsed[0].args.tokenId) {
-              tokenId = Number(parsed[0].args.tokenId)
-              console.log('TokenId from Transfer event:', tokenId)
-            }
-          } catch (e) {
-            console.warn('Event parsing failed, using fallback:', e)
-          }
-
-          // Fallback: read nextTokenId and subtract 1
-          if (!tokenId) {
-            console.log('Using fallback method to get tokenId')
-            const nextId = await client.readContract({
-              address: contractAddress,
-              abi: contractABI,
-              functionName: 'nextTokenId',
-            })
-            tokenId = Number(nextId) - 1 // Last minted token
-            console.log('TokenId from nextTokenId fallback:', tokenId)
-          }
-
-          if (!tokenId || tokenId < 1) {
-            throw new Error('Failed to extract valid tokenId from transaction')
-          }
-
-          console.log('Updating post with tokenId:', tokenId)
-          // Update post with tokenId
-          const updateResponse = await fetch(`/api/posts/${pendingPostId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              mintStatus: 'success',
-              tokenId,
-            }),
-          })
-
-          if (!updateResponse.ok) {
-            throw new Error('Failed to update post with tokenId')
-          }
-
-          console.log('Post updated successfully')
-          setMintStatus('success')
-          setText('')
-          setIsSubmitting(false)
-          setPendingPostId(null)
-          onPostCreated()
-          setTimeout(() => setMintStatus('idle'), 2000)
-        } catch (error) {
-          console.error('Failed to extract tokenId:', error)
-          setMintStatus('error')
-          setIsSubmitting(false)
-          setPendingPostId(null)
-          alert(`Transaction confirmed but failed to extract tokenId: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        }
-      }
-
-      extractTokenId()
+    if (isSuccess && mintStatus === 'minting' && hash && pendingPostId && !isProcessingTx) {
+      processTransactionSuccess(hash, pendingPostId).catch((error) => {
+        console.error('Failed to process transaction success:', error)
+        setMintStatus('error')
+        setIsSubmitting(false)
+        setPendingPostId(null)
+        setIsProcessingTx(false)
+        alert(`Transaction confirmed but failed to process: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      })
     }
-  }, [isSuccess, hash, mintStatus, pendingPostId, onPostCreated, isMainnet])
+  }, [isSuccess, hash, mintStatus, pendingPostId, isProcessingTx, processTransactionSuccess])
 
   const remainingChars = 280 - text.length
   const canSubmit = text.trim().length > 0 && text.length <= 280 && !isSubmitting && address

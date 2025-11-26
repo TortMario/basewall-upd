@@ -114,8 +114,8 @@ export async function GET(request: NextRequest) {
       (post) => post.mintStatus === 'success' && post.tokenId !== null && post.tokenId !== undefined
     )
     
-    // Sort by createdAt descending (newest first)
-    validPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    // Sort by createdAt ascending (oldest first)
+    validPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     
     // Apply pagination after filtering
     const paginatedPosts = validPosts.slice(offset, offset + limit)

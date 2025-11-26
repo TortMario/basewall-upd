@@ -172,6 +172,8 @@ export function PostList({ onEdit }: PostListProps) {
       {loading && posts.length > 0 && (
         <div className="text-center py-4 text-blue-600">Loading more...</div>
       )}
+      {/* Extra space at the bottom for better scrolling experience */}
+      <div className="h-32" />
     </div>
   )
 }

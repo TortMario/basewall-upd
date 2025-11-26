@@ -90,13 +90,14 @@ export function Post({
 
     setIsDeleting(true)
 
-    // If post has an NFT, burn it first
+    // If post has an NFT, burn it by transferring to zero address
     if (post.tokenId && post.mintStatus === 'success') {
+      const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address
       writeContract({
         address: contractAddress,
         abi: contractABI,
-        functionName: 'burn',
-        args: [BigInt(post.tokenId)],
+        functionName: 'safeTransferFrom',
+        args: [address as Address, ZERO_ADDRESS, BigInt(post.tokenId)],
       })
     } else {
       // No NFT to burn, just delete the post
