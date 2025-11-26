@@ -304,16 +304,17 @@ export function Post({
               paddingBottom: '35px',
               paddingLeft: '10px'
             }}>
+              
               {currentUserIsAdmin && !canEdit && (
                 <div className="absolute top-2 right-2">
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
-                    title="Admin: Delete any post"
-                  >
-                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
-                  </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
+                      title="Admin: Delete any post"
+                    >
+                      {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
+                    </button>
                 </div>
               )}
 
@@ -348,7 +349,7 @@ export function Post({
                       🔒
                     </div>
                   )}
-                  <p className="text-black text-sm leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+                <p className="text-black text-sm leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
                 </div>
               )}
             </div>
@@ -388,7 +389,7 @@ export function Post({
                 </button>
               </>
             )}
-            {canEdit && !isEditing && (
+            {isAuthor && !isEditing && (
               <>
                 <button
                   onClick={handleEditClick}
