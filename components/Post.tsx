@@ -195,7 +195,10 @@ export function Post({
       })
       
       if (!response.ok) {
-        throw new Error('Failed to highlight post')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const errorMessage = errorData.error || 'Failed to highlight post'
+        console.error('Highlight error:', errorMessage, { username: currentUserUsername, params: params.toString() })
+        throw new Error(errorMessage)
       }
 
       const updated = await response.json()
@@ -225,7 +228,10 @@ export function Post({
       })
       
       if (!response.ok) {
-        throw new Error('Failed to hide post')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const errorMessage = errorData.error || 'Failed to hide post'
+        console.error('Hide error:', errorMessage, { username: currentUserUsername, params: params.toString() })
+        throw new Error(errorMessage)
       }
 
       onDelete(post.id)
@@ -277,7 +283,7 @@ export function Post({
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ml-[-75px]`} style={{ 
+            } ml-[-60px]`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',

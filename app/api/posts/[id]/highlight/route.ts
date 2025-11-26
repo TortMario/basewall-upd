@@ -26,8 +26,25 @@ export async function PUT(
     const isAdmin = normalizedUsername === normalizedAdminUsername || 
                     addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
 
+    // Debug logging
+    console.log('Admin check (highlight):', {
+      usernameParam,
+      normalizedUsername,
+      ADMIN_USERNAME,
+      normalizedAdminUsername,
+      addressParam,
+      ADMIN_ADDRESS,
+      isAdmin
+    })
+
     if (!isAdmin) {
-      return NextResponse.json({ error: 'Only admin can highlight posts' }, { status: 403 })
+      return NextResponse.json({ 
+        error: 'Only admin can highlight posts',
+        debug: {
+          received: { username: usernameParam, address: addressParam },
+          expected: { username: ADMIN_USERNAME, address: ADMIN_ADDRESS }
+        }
+      }, { status: 403 })
     }
 
     const updated = await kv.updatePost(id, { isHighlighted: !post.isHighlighted })
