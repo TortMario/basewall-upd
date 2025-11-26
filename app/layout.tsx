@@ -3,18 +3,18 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata: Metadata = {
-  title: 'The Wall Base - NFT Social Feed',
-  description: 'A hybrid NFT + off-chain social feed on Base',
+  title: 'The Wall Base - Social Feed',
+  description: 'A social feed on Base. Create and share posts with the community.',
   openGraph: {
     title: 'The Wall Base',
-    description: 'A hybrid NFT + off-chain social feed on Base',
+    description: 'A social feed on Base. Create and share posts with the community.',
     type: 'website',
     images: [
       {
         url: '/og.png',
         width: 1200,
         height: 630,
-        alt: 'The Wall Base - NFT Social Feed',
+        alt: 'The Wall Base - Social Feed',
       },
     ],
   },
