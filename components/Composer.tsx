@@ -51,14 +51,14 @@ export function Composer({ onPostCreated }: ComposerProps) {
       const checkData = await checkResponse.json()
       
       if (!checkData.canPost) {
-        const hoursLeft = checkData.hoursLeft || 0
         const minutesLeft = checkData.minutesLeft || 0
-        if (hoursLeft > 0) {
-          throw new Error(`You can post again in ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''}`)
-        } else if (minutesLeft > 0) {
-          throw new Error(`You can post again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}`)
+        const secondsLeft = checkData.secondsLeft || 0
+        if (minutesLeft > 0) {
+          throw new Error(`You can post again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}${secondsLeft > 0 ? ` and ${secondsLeft} second${secondsLeft > 1 ? 's' : ''}` : ''}`)
+        } else if (secondsLeft > 0) {
+          throw new Error(`You can post again in ${secondsLeft} second${secondsLeft > 1 ? 's' : ''}`)
         } else {
-          throw new Error('You can only post once per 24 hours')
+          throw new Error('You can only post once per 15 minutes')
         }
       }
 

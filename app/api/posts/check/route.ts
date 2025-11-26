@@ -31,17 +31,17 @@ export async function GET(request: NextRequest) {
     const lastPostTime = new Date(lastPost.createdAt).getTime()
     const now = Date.now()
     const timeSinceLastPost = now - lastPostTime
-    const hours24 = 24 * 60 * 60 * 1000
+    const minutes15 = 15 * 60 * 1000
 
-    if (timeSinceLastPost >= hours24) {
-      return NextResponse.json({ canPost: true, lastPostTime: lastPost.createdAt, hoursLeft: 0, minutesLeft: 0 })
+    if (timeSinceLastPost >= minutes15) {
+      return NextResponse.json({ canPost: true, lastPostTime: lastPost.createdAt, minutesLeft: 0, secondsLeft: 0 })
     }
 
-    const timeRemaining = hours24 - timeSinceLastPost
-    const hoursLeft = Math.floor(timeRemaining / (60 * 60 * 1000))
-    const minutesLeft = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000))
+    const timeRemaining = minutes15 - timeSinceLastPost
+    const minutesLeft = Math.floor(timeRemaining / (60 * 1000))
+    const secondsLeft = Math.floor((timeRemaining % (60 * 1000)) / 1000)
 
-    return NextResponse.json({ canPost: false, lastPostTime: lastPost.createdAt, hoursLeft, minutesLeft })
+    return NextResponse.json({ canPost: false, lastPostTime: lastPost.createdAt, minutesLeft, secondsLeft })
   } catch {
     return NextResponse.json({ canPost: false, error: 'Failed to check post availability' }, { status: 500 })
   }
