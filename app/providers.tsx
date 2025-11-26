@@ -1,6 +1,17 @@
 'use client'
 
+import { WagmiProvider } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { wagmiConfig } from '@/lib/wagmi'
+
+const queryClient = new QueryClient()
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  // No providers needed - we use Base App identity directly via Farcaster Mini App SDK
-  return <>{children}</>
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Post } from './Post'
 import { Post as PostType } from '@/lib/kv'
 import { sdk } from '@farcaster/miniapp-sdk'
+import { useAccount } from 'wagmi'
 
 interface PostListProps {
   onEdit: (post: PostType) => void
@@ -19,6 +20,9 @@ export function PostList({ onEdit }: PostListProps) {
   const [currentUserUsername, setCurrentUserUsername] = useState<string | undefined>(undefined)
   const [currentUserAddress, setCurrentUserAddress] = useState<string | undefined>(undefined)
   const observerTarget = useRef<HTMLDivElement>(null)
+  
+  // Get wallet address from wagmi (for browser wallet connection)
+  const { address: walletAddress, isConnected } = useAccount()
 
   useEffect(() => {
     const getUserData = async () => {
@@ -35,6 +39,7 @@ export function PostList({ onEdit }: PostListProps) {
         }
         
         if (isInMiniApp) {
+          // In Mini App - get data from SDK
           try {
             context = await sdk.context
             console.log('🔍 SDK context:', context)
@@ -58,7 +63,8 @@ export function PostList({ onEdit }: PostListProps) {
             console.warn('⚠️ User not found in SDK context')
           }
         } else {
-          console.warn('⚠️ Not in Mini App context - admin features will not work')
+          // Not in Mini App - use wallet address for admin check
+          console.log('⚠️ Not in Mini App context - using wallet for admin check')
         }
       } catch (error) {
         console.error('❌ Error getting user data:', error)
@@ -66,6 +72,16 @@ export function PostList({ onEdit }: PostListProps) {
     }
     getUserData()
   }, [])
+
+  // Update address from wallet when connected (for browser)
+  useEffect(() => {
+    if (walletAddress && isConnected) {
+      console.log('✅ Setting wallet address:', walletAddress)
+      setCurrentUserAddress(walletAddress)
+    } else if (!isConnected) {
+      setCurrentUserAddress(undefined)
+    }
+  }, [walletAddress, isConnected])
 
   const loadPosts = useCallback(async (currentOffset: number, append = false) => {
     try {

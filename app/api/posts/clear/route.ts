@@ -7,18 +7,27 @@ const REACTION_KEY_PREFIX = 'reaction:'
 
 export async function DELETE(request: NextRequest) {
   try {
-    // TEMPORARY: Admin check disabled for clearing posts
-    // TODO: Re-enable admin check after clearing posts
-    // const searchParams = request.nextUrl.searchParams
-    // const usernameParam = searchParams.get('username')
-    // 
-    // const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
-    // const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
-    // const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
-    // 
-    // if (normalizedUsername !== normalizedAdminUsername) {
-    //   return NextResponse.json({ error: 'Only admin can clear all posts' }, { status: 403 })
-    // }
+    const searchParams = request.nextUrl.searchParams
+    const usernameParam = searchParams.get('username')
+    const addressParam = searchParams.get('address')
+    const fidParam = searchParams.get('fid')
+    const fid = fidParam ? parseInt(fidParam, 10) : undefined
+    
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'mynameisthe'
+    const ADMIN_ADDRESS = process.env.ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
+    const ADMIN_FID = process.env.ADMIN_FID ? parseInt(process.env.ADMIN_FID, 10) : undefined
+    
+    // Check admin by FID, username, or address
+    const normalizedUsername = usernameParam?.replace(/^@/, '').toLowerCase() || ''
+    const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+    const isAdmin = 
+      (ADMIN_FID && fid === ADMIN_FID) ||
+      normalizedUsername === normalizedAdminUsername || 
+      addressParam?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
+    
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Only admin can clear all posts' }, { status: 403 })
+    }
 
     // Get all post IDs from sorted set
     const postIds = await kv.zrange(POSTS_KEY, 0, -1)
