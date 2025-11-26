@@ -12,7 +12,7 @@ export interface Author {
   username?: string
   displayName?: string
   pfp?: string
-  address: string
+  address?: string
 }
 
 export interface Post {
@@ -21,9 +21,6 @@ export interface Post {
   authorAddress: string
   author?: Author
   createdAt: string
-  tokenId: number | null
-  tokenUri: string | null
-  mintStatus: 'pending' | 'success' | 'failed'
   likes: number
   dislikes: number
 }
@@ -31,7 +28,7 @@ export interface Post {
 export interface Reaction {
   id: string
   postId: string
-  userAddress: string
+  fid: number
   type: 'like' | 'dislike'
   createdAt: string
 }
@@ -118,17 +115,17 @@ export async function deletePost(id: string): Promise<boolean> {
 }
 
 // Reactions storage
-export async function getReaction(postId: string, userAddress: string): Promise<Reaction | null> {
-  return kv.get<Reaction>(`${REACTION_KEY_PREFIX}${postId}:${userAddress.toLowerCase()}`)
+export async function getReaction(postId: string, fid: number): Promise<Reaction | null> {
+  return kv.get<Reaction>(`${REACTION_KEY_PREFIX}${postId}:fid:${fid}`)
 }
 
 export async function setReaction(
   postId: string,
-  userAddress: string,
+  fid: number,
   type: 'like' | 'dislike'
 ): Promise<{ likes: number; dislikes: number }> {
-  const key = `${REACTION_KEY_PREFIX}${postId}:${userAddress.toLowerCase()}`
-  const existing = await getReaction(postId, userAddress)
+  const key = `${REACTION_KEY_PREFIX}${postId}:fid:${fid}`
+  const existing = await getReaction(postId, fid)
 
   const post = await getPost(postId)
   if (!post) throw new Error('Post not found')
@@ -164,7 +161,7 @@ export async function setReaction(
     await kv.set(key, {
       id: crypto.randomUUID(),
       postId,
-      userAddress: userAddress.toLowerCase(),
+      fid,
       type,
       createdAt: new Date().toISOString(),
     })

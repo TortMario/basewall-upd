@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthFromRequest } from '@/lib/auth'
 import { z } from 'zod'
 import * as kv from '@/lib/kv'
 
 const createPostSchema = z.object({
   text: z.string().min(1).max(280),
-  authorAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  fid: z.number().int().positive(),
   author: z.union([
     z.object({
       fid: z.number().optional().nullable(),
@@ -15,7 +14,7 @@ const createPostSchema = z.object({
         (val) => !val || val === '' || z.string().url().safeParse(val).success,
         { message: 'pfp must be a valid URL or empty string' }
       ),
-      address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+      address: z.string().optional().nullable(),
     }),
     z.null(),
   ]).optional(),
@@ -47,36 +46,54 @@ export async function POST(request: NextRequest) {
       throw validationError
     }
     
-    const { text, authorAddress, author } = validatedData
+    const { text, fid, author } = validatedData
 
-    // Verify auth if available
-    const auth = await getAuthFromRequest(request)
-    if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-      if (authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
-        return NextResponse.json({ error: 'Address mismatch' }, { status: 403 })
+    // Check if user can post (1 post per 24 hours)
+    const allPosts = await kv.getPosts(1000, 0)
+    const userPosts = allPosts.filter(
+      (post) => post.author?.fid === fid
+    )
+
+    if (userPosts.length > 0) {
+      const lastPost = userPosts.reduce((latest, post) => {
+        const postTime = new Date(post.createdAt).getTime()
+        const latestTime = new Date(latest.createdAt).getTime()
+        return postTime > latestTime ? post : latest
+      })
+
+      const lastPostTime = new Date(lastPost.createdAt).getTime()
+      const now = Date.now()
+      const timeSinceLastPost = now - lastPostTime
+      const hours24 = 24 * 60 * 60 * 1000
+
+      if (timeSinceLastPost < hours24) {
+        const timeRemaining = hours24 - timeSinceLastPost
+        const hoursLeft = Math.floor(timeRemaining / (60 * 60 * 1000))
+        const minutesLeft = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000))
+        
+        return NextResponse.json({ 
+          error: 'You can only post once per 24 hours',
+          hoursLeft,
+          minutesLeft,
+        }, { status: 429 })
       }
     }
 
-    // Generate metadata URI (will be updated after mint)
-    const localId = crypto.randomUUID()
-    const metadataUri = `${process.env.NEXT_PUBLIC_MINIAPP_URL || 'http://localhost:3000'}/api/metadata/${localId}`
-
     // Clean up author data - remove null/empty values
     const cleanedAuthor = author ? {
-      fid: author.fid ?? undefined,
+      fid: author.fid ?? fid,
       username: author.username || undefined,
       displayName: author.displayName || undefined,
       pfp: author.pfp && author.pfp.trim() !== '' ? author.pfp : undefined,
-      address: author.address.toLowerCase(),
-    } : undefined
+      address: author.address || undefined,
+    } : {
+      fid,
+    }
 
     const newPost = await kv.createPost({
       text,
-      authorAddress: authorAddress.toLowerCase(),
+      authorAddress: author?.address || `fid:${fid}`, // Use fid-based address if no address
       author: cleanedAuthor,
-      tokenId: null,
-      tokenUri: metadataUri,
-      mintStatus: 'pending',
       likes: 0,
       dislikes: 0,
     })
@@ -84,7 +101,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       id: newPost.id,
       status: 'created',
-      metadataUri,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,29 +114,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/posts - Get posts with pagination (only posts with successful mint)
+// GET /api/posts - Get posts with pagination
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    // Get all posts (we'll filter them)
-    const allPosts = await kv.getPosts(1000, 0) // Get more to filter properly
-    
-    // Filter: only show posts with mintStatus === 'success' AND tokenId is not null
-    // This ensures only posts with successfully minted NFTs are shown
-    const validPosts = allPosts.filter(
-      (post) => post.mintStatus === 'success' && post.tokenId !== null && post.tokenId !== undefined
-    )
+    // Get all posts
+    const allPosts = await kv.getPosts(1000, 0)
     
     // Sort by createdAt ascending (oldest first)
-    validPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    allPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     
-    // Apply pagination after filtering
-    const paginatedPosts = validPosts.slice(offset, offset + limit)
+    // Apply pagination
+    const paginatedPosts = allPosts.slice(offset, offset + limit)
 
-    return NextResponse.json({ posts: paginatedPosts, total: validPosts.length })
+    return NextResponse.json({ posts: paginatedPosts, total: allPosts.length })
   } catch (error) {
     console.error('GET /api/posts error:', error)
     return NextResponse.json({ 

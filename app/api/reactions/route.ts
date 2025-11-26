@@ -1,30 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthFromRequest } from '@/lib/auth'
 import { z } from 'zod'
 import * as kv from '@/lib/kv'
 
 const reactionSchema = z.object({
   postId: z.string().uuid(),
   type: z.enum(['like', 'dislike']),
+  fid: z.number().int().positive(),
 })
 
 // POST /api/reactions - Add or update reaction
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { postId, type } = reactionSchema.parse(body)
+    const { postId, type, fid } = reactionSchema.parse(body)
 
-    // Get auth if available, otherwise use address from request body
-    const auth = await getAuthFromRequest(request)
-    const userAddress = auth?.address && auth.address !== '0x0000000000000000000000000000000000000000'
-      ? auth.address
-      : body.userAddress || '0x0000000000000000000000000000000000000000'
-
-    if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
-      return NextResponse.json({ error: 'User address required' }, { status: 400 })
+    if (!fid) {
+      return NextResponse.json({ error: 'FID is required' }, { status: 400 })
     }
 
-    const result = await kv.setReaction(postId, userAddress, type)
+    const result = await kv.setReaction(postId, fid, type)
 
     return NextResponse.json({
       success: true,
@@ -43,18 +37,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/reactions?postId=...&userAddress=... - Get user's reaction for a post
+// GET /api/reactions?postId=...&fid=... - Get user's reaction for a post
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const postId = searchParams.get('postId')
-    const userAddress = searchParams.get('userAddress')
+    const fidParam = searchParams.get('fid')
 
-    if (!postId || !userAddress) {
+    if (!postId || !fidParam) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    const reaction = await kv.getReaction(postId, userAddress)
+    const fid = parseInt(fidParam, 10)
+    if (isNaN(fid) || fid <= 0) {
+      return NextResponse.json({ error: 'Invalid FID' }, { status: 400 })
+    }
+
+    const reaction = await kv.getReaction(postId, fid)
 
     return NextResponse.json({ reaction: reaction?.type || null })
   } catch (error) {

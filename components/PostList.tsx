@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useAccount } from 'wagmi'
 import { Post } from './Post'
-import { Post as PostType } from '@/lib/supabase'
-import { Address } from 'viem'
+import { Post as PostType } from '@/lib/kv'
+import { sdk } from '@farcaster/miniapp-sdk'
 
 interface PostListProps {
   onEdit: (post: PostType) => void
@@ -16,9 +15,26 @@ export function PostList({ onEdit }: PostListProps) {
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
   const [userReactions, setUserReactions] = useState<Record<string, 'like' | 'dislike'>>({})
-  const [postOwners, setPostOwners] = useState<Record<string, Address>>({})
-  const { address } = useAccount()
+  const [currentUserFid, setCurrentUserFid] = useState<number | undefined>(undefined)
   const observerTarget = useRef<HTMLDivElement>(null)
+
+  // Get current user fid from Base App
+  useEffect(() => {
+    const getUserFid = async () => {
+      try {
+        const isInMiniApp = await sdk.isInMiniApp()
+        if (isInMiniApp) {
+          const context = await sdk.context
+          if (context?.user?.fid) {
+            setCurrentUserFid(context.user.fid)
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to get user fid:', error)
+      }
+    }
+    getUserFid()
+  }, [])
 
   const loadPosts = useCallback(async (currentOffset: number, append = false) => {
     try {
@@ -43,11 +59,13 @@ export function PostList({ onEdit }: PostListProps) {
         setPosts(newPosts)
       }
 
-      if (address) {
+      // Load reactions for current user (if fid is available)
+      if (currentUserFid) {
         const reactionPromises = newPosts.map((post: PostType) =>
-          fetch(`/api/reactions?postId=${post.id}&userAddress=${address}`)
+          fetch(`/api/reactions?postId=${post.id}&fid=${currentUserFid}`)
             .then((res) => res.json())
             .then((data) => ({ postId: post.id, reaction: data.reaction }))
+            .catch(() => ({ postId: post.id, reaction: null }))
         )
         const reactions = await Promise.all(reactionPromises)
         setUserReactions((prev) => {
@@ -58,29 +76,12 @@ export function PostList({ onEdit }: PostListProps) {
           return updated
         })
       }
-
-      const ownerPromises = newPosts
-        .filter((post: PostType) => post.tokenId)
-        .map((post: PostType) =>
-          fetch(`/api/posts/${post.id}/owner`)
-            .then((res) => res.json())
-            .then((data) => ({ postId: post.id, owner: data.owner }))
-            .catch(() => ({ postId: post.id, owner: null }))
-        )
-      const owners = await Promise.all(ownerPromises)
-      setPostOwners((prev) => {
-        const updated = { ...prev }
-        owners.forEach(({ postId, owner }) => {
-          if (owner) updated[postId] = owner as Address
-        })
-        return updated
-      })
     } catch (error) {
       console.error('Failed to load posts:', error)
     } finally {
       setLoading(false)
     }
-  }, [address])
+  }, [currentUserFid])
 
   useEffect(() => {
     loadPosts(0, false)
@@ -109,13 +110,16 @@ export function PostList({ onEdit }: PostListProps) {
   }, [hasMore, loading, offset, loadPosts])
 
   const handleReaction = async (postId: string, type: 'like' | 'dislike') => {
-    if (!address) return
+    if (!currentUserFid) {
+      alert('Please use Base App to react to posts')
+      return
+    }
 
     try {
       const response = await fetch('/api/reactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, type, userAddress: address }),
+        body: JSON.stringify({ postId, type, fid: currentUserFid }),
       })
 
       const data = await response.json()
@@ -165,7 +169,7 @@ export function PostList({ onEdit }: PostListProps) {
           onReaction={handleReaction}
           onEdit={onEdit}
           onDelete={handleDelete}
-          currentOwner={postOwners[post.id]}
+          currentUserFid={currentUserFid}
         />
       ))}
       <div ref={observerTarget} className="h-4" />
@@ -177,4 +181,3 @@ export function PostList({ onEdit }: PostListProps) {
     </div>
   )
 }
-

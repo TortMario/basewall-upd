@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthFromRequest } from '@/lib/auth'
-import { createPublicClient, http } from 'viem'
-import { base, baseSepolia } from 'viem/chains'
-import { contractABI, contractAddress } from '@/lib/contract'
 import * as kv from '@/lib/kv'
 
-// PATCH /api/posts/:id - Update post (only owner)
+// PATCH /api/posts/:id - Update post (only author by fid)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -13,62 +9,25 @@ export async function PATCH(
   try {
     const { id } = params
     const body = await request.json()
-    const { text, tokenId, mintStatus } = body
+    const { text, fid } = body
 
-    // Get auth if available, but don't require it
-    const auth = await getAuthFromRequest(request)
+    if (!fid) {
+      return NextResponse.json({ error: 'FID is required' }, { status: 400 })
+    }
 
     const post = await kv.getPost(id)
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    // If post has tokenId, verify ownership on-chain
-    if (post.tokenId) {
-      const chain = process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
-        ? baseSepolia
-        : base
-
-      const client = createPublicClient({
-        chain,
-        transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
-      })
-
-      try {
-        const owner = await client.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'ownerOf',
-          args: [BigInt(post.tokenId)],
-        })
-
-        // If auth is provided, verify ownership. Otherwise, allow if on-chain check passes later
-        if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-          if (owner.toLowerCase() !== auth.address.toLowerCase()) {
-            return NextResponse.json({ error: 'Only token owner can edit' }, { status: 403 })
-          }
-        }
-        // Store owner for later verification
-        const verifiedOwner = owner
-      } catch (error) {
-        console.error('On-chain ownership check failed:', error)
-        return NextResponse.json({ error: 'Failed to verify ownership' }, { status: 500 })
-      }
-    } else {
-      // For unminted posts, check authorAddress
-      // If auth is provided, verify. Otherwise, we'll verify on-chain ownership after mint
-      if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-        if (post.authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
-          return NextResponse.json({ error: 'Only author can edit' }, { status: 403 })
-        }
-      }
+    // Verify ownership by fid
+    if (post.author?.fid !== fid) {
+      return NextResponse.json({ error: 'Only post author can edit' }, { status: 403 })
     }
 
     // Update post
     const updateData: any = {}
     if (text !== undefined) updateData.text = text
-    if (tokenId !== undefined) updateData.tokenId = tokenId
-    if (mintStatus !== undefined) updateData.mintStatus = mintStatus
 
     const updated = await kv.updatePost(id, updateData)
     if (!updated) {
@@ -82,97 +41,33 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/posts/:id - Delete post (only owner)
+// DELETE /api/posts/:id - Delete post (only author by fid)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params
-    const auth = await getAuthFromRequest(request)
+    const searchParams = request.nextUrl.searchParams
+    const fidParam = searchParams.get('fid')
+
+    if (!fidParam) {
+      return NextResponse.json({ error: 'FID is required' }, { status: 400 })
+    }
+
+    const fid = parseInt(fidParam, 10)
+    if (isNaN(fid) || fid <= 0) {
+      return NextResponse.json({ error: 'Invalid FID' }, { status: 400 })
+    }
 
     const post = await kv.getPost(id)
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    // Verify ownership (same logic as PATCH)
-    if (post.tokenId) {
-      const chain = process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
-        ? baseSepolia
-        : base
-
-      const client = createPublicClient({
-        chain,
-        transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
-      })
-
-      try {
-        const owner = await client.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'ownerOf',
-          args: [BigInt(post.tokenId)],
-        })
-
-        // If auth is provided, verify ownership
-        if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-          if (owner.toLowerCase() !== auth.address.toLowerCase()) {
-            return NextResponse.json({ error: 'Only token owner can delete' }, { status: 403 })
-          }
-        }
-      } catch (error) {
-        console.error('On-chain ownership check failed:', error)
-        return NextResponse.json({ error: 'Failed to verify ownership' }, { status: 500 })
-      }
-    } else {
-      // For unminted posts, check authorAddress
-      if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-        if (post.authorAddress.toLowerCase() !== auth.address.toLowerCase()) {
-          return NextResponse.json({ error: 'Only author can delete' }, { status: 403 })
-        }
-      }
-    }
-
-    // If post has tokenId, burn the NFT before deleting
-    if (post.tokenId) {
-      const chain = process.env.NEXT_PUBLIC_BASE_RPC_URL?.includes('sepolia')
-        ? baseSepolia
-        : base
-
-      const client = createPublicClient({
-        chain,
-        transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
-      })
-
-      try {
-        // Verify ownership before burning
-        const owner = await client.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'ownerOf',
-          args: [BigInt(post.tokenId)],
-        })
-
-        // If auth is provided, verify ownership
-        if (auth && auth.address !== '0x0000000000000000000000000000000000000000') {
-          if (owner.toLowerCase() !== auth.address.toLowerCase()) {
-            return NextResponse.json({ error: 'Only token owner can delete' }, { status: 403 })
-          }
-        }
-
-        // Note: Burning NFT requires a transaction from the owner
-        // This should be done on the client side before calling DELETE
-        // We just verify ownership here
-      } catch (error) {
-        console.error('On-chain ownership check failed:', error)
-        // If token doesn't exist (already burned), continue with deletion
-        if (error instanceof Error && error.message.includes('nonexistent token')) {
-          console.log('Token already burned, proceeding with deletion')
-        } else {
-          return NextResponse.json({ error: 'Failed to verify ownership' }, { status: 500 })
-        }
-      }
+    // Verify ownership by fid
+    if (post.author?.fid !== fid) {
+      return NextResponse.json({ error: 'Only post author can delete' }, { status: 403 })
     }
 
     // Delete post

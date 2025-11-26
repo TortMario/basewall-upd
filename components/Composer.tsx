@@ -1,11 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useChainId, useSwitchChain, useWalletClient } from 'wagmi'
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { contractABI, contractAddress } from '@/lib/onchain'
-import { Address } from 'viem'
-import { base, baseSepolia } from 'wagmi/chains'
+import { useState } from 'react'
 import { sdk } from '@farcaster/miniapp-sdk'
 
 interface ComposerProps {
@@ -15,499 +10,142 @@ interface ComposerProps {
 export function Composer({ onPostCreated }: ComposerProps) {
   const [text, setText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [mintStatus, setMintStatus] = useState<'idle' | 'creating' | 'minting' | 'success' | 'error'>('idle')
-  const { address, isConnected } = useAccount()
-  const chainId = useChainId()
-  const { switchChain } = useSwitchChain()
-  const { data: walletClient } = useWalletClient()
-  const { writeContract, data: hash, error: writeError, isPending: isWriting } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({
-    hash,
-  })
-
-  // Determine target chain (Base mainnet or Sepolia)
-  // Check RPC URL to determine which network we should use
-  const rpcUrl = typeof window !== 'undefined' 
-    ? (process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org')
-    : 'https://mainnet.base.org'
-  const isMainnet = !rpcUrl.includes('sepolia')
-  const targetChain = isMainnet ? base : baseSepolia
-  const isCorrectChain = chainId === targetChain.id
+  const [error, setError] = useState<string | null>(null)
+  const [lastPostTime, setLastPostTime] = useState<number | null>(null)
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (!text.trim() || !address || text.length > 280) return
-
-    console.log('=== Starting post creation ===')
-    console.log('Wallet status:', { isConnected, address, chainId, isCorrectChain })
-
-    // Check wallet connection
-    if (!isConnected || !address) {
-      console.error('Wallet not connected:', { isConnected, address })
-      alert('Please connect your wallet first')
-      return
-    }
-
-    // Check if wallet is available (for Base App)
-    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
-    if (!ethereum && !walletClient) {
-      console.error('Wallet provider not available')
-      alert('Wallet provider not found. Please use Base App or install a wallet extension.')
-      return
-    }
-
-    // Check if we're on the correct network
-    if (!isCorrectChain && switchChain) {
-      console.log('Switching chain to:', targetChain.name, targetChain.id)
-      try {
-        await switchChain({ chainId: targetChain.id })
-        // Wait a bit for chain switch
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        console.log('Chain switch completed')
-      } catch (error) {
-        console.error('Failed to switch chain:', error)
-        alert(`Please switch to ${targetChain.name} network`)
-        return
-      }
-    }
+    if (!text.trim() || text.length > 280) return
 
     setIsSubmitting(true)
-    setMintStatus('creating')
+    setError(null)
 
     try {
-      // Get user data from Base App via Mini App SDK context
+      // Get user data from Base App via Mini App SDK
       let authorData = null
+      let fid: number | null = null
+      
       try {
         const isInMiniApp = await sdk.isInMiniApp()
         if (isInMiniApp) {
           const context = await sdk.context
           if (context?.user) {
             const user = context.user
+            fid = user.fid ?? null
             authorData = {
               fid: user.fid ?? null,
               username: user.username || null,
               displayName: user.displayName || null,
               pfp: user.pfpUrl && user.pfpUrl.trim() !== '' ? user.pfpUrl : null,
-              address: address, // Use address from wagmi useAccount
+              address: user.custodyAddress || null, // Use custody address if available
             }
           }
         }
       } catch (error) {
         console.warn('Failed to get user data from Mini App SDK context:', error)
-        // Continue without author data if SDK is not available
+        throw new Error('Please use Base App to create posts')
       }
 
-      // Step 1: Create post in database
+      if (!fid) {
+        throw new Error('Unable to identify user. Please use Base App.')
+      }
+
+      // Check if user can post (1 post per 24 hours)
+      const checkResponse = await fetch(`/api/posts/check?fid=${fid}`)
+      const checkData = await checkResponse.json()
+      
+      if (!checkData.canPost) {
+        const hoursLeft = checkData.hoursLeft || 0
+        const minutesLeft = checkData.minutesLeft || 0
+        if (hoursLeft > 0) {
+          throw new Error(`You can post again in ${hoursLeft} hour${hoursLeft > 1 ? 's' : ''}`)
+        } else if (minutesLeft > 0) {
+          throw new Error(`You can post again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}`)
+        } else {
+          throw new Error('You can only post once per 24 hours')
+        }
+      }
+
+      // Create post
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // In production, get token from miniapp SDK
-          // Authorization: `Bearer ${await sdk.quickAuth.getToken()}`,
         },
         body: JSON.stringify({
           text: text.trim(),
-          authorAddress: address,
           author: authorData,
+          fid: fid,
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('API Error:', errorData)
         throw new Error(errorData.error || 'Failed to create post')
       }
 
-      const { id, metadataUri } = await response.json()
+      const result = await response.json()
       
-      if (!id || !metadataUri) {
-        throw new Error('Invalid response from server: missing id or metadataUri')
-      }
-
-      setPendingPostId(id)
-      setMintStatus('minting')
-
-      // Validate contract address with detailed logging
-      console.log('🔍 Contract address check:', {
-        contractAddress,
-        envVar: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
-        isValid: contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000'
-      })
-      
-      if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
-        console.error('❌ Contract address validation failed:', {
-          contractAddress,
-          envVar: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
-          allEnvKeys: typeof window !== 'undefined' ? Object.keys(process.env).filter(k => k.includes('CONTRACT') || k.includes('BASE')) : []
-        })
-        throw new Error('Contract address not configured. Please set NEXT_PUBLIC_CONTRACT_ADDRESS in Vercel environment variables and redeploy the project.')
-      }
-
-      if (!contractABI) {
-        throw new Error('Contract ABI not loaded')
-      }
-
-      // Ensure we're on the correct chain before minting
-      if (chainId !== targetChain.id) {
-        throw new Error(`Please switch to ${targetChain.name} network`)
-      }
-
-      // Mint NFT - try wagmi first, fallback to direct ethereum call
-      console.log('=== Starting NFT mint ===')
-      console.log('Minting NFT with:', { 
-        contractAddress, 
-        address, 
-        metadataUri, 
-        chainId,
-        contractABI: contractABI ? 'loaded' : 'missing'
-      })
-      
-      // Ensure contract address is valid
-      if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
-        throw new Error('Invalid contract address')
-      }
-
-      // Get mint fee from contract (0.0001 ETH = ~0.05 USD)
-      const MINT_FEE = BigInt('100000000000000') // 0.0001 ETH in wei
-      
-      // Try wagmi writeContract first
-      try {
-        console.log('Attempting to call writeContract via wagmi...')
-        writeContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'mintTo',
-          args: [address as Address, metadataUri],
-          value: MINT_FEE,
-        })
-        console.log('writeContract called successfully, waiting for hash...')
-        
-        // Wait a bit to see if hash is generated (wagmi is async)
-        let attempts = 0
-        while (!hash && attempts < 10) {
-          await new Promise(resolve => setTimeout(resolve, 500))
-          attempts++
-        }
-        
-        if (!hash) {
-          console.warn('No transaction hash from wagmi after 5 seconds, trying direct ethereum call...')
-          const directHash = await mintViaDirectCall(address, metadataUri)
-          setDirectTxHash(directHash as `0x${string}`)
-        }
-      } catch (error) {
-        console.error('Error calling writeContract:', error)
-        console.log('Falling back to direct ethereum call...')
-        try {
-          const directHash = await mintViaDirectCall(address, metadataUri)
-          setDirectTxHash(directHash as `0x${string}`)
-        } catch (fallbackError) {
-          console.error('Both wagmi and direct call failed:', fallbackError)
-          throw fallbackError
-        }
+      if (result.id) {
+        setText('')
+        setLastPostTime(Date.now())
+        onPostCreated()
+      } else {
+        throw new Error('Invalid response from server')
       }
     } catch (error) {
       console.error('Post creation error:', error)
-      setMintStatus('error')
+      setError(error instanceof Error ? error.message : 'Failed to create post')
+    } finally {
       setIsSubmitting(false)
-      alert(error instanceof Error ? error.message : 'Failed to create post')
     }
   }
 
-  // Store postId for updating after mint
-  const [pendingPostId, setPendingPostId] = useState<string | null>(null)
-  // Store direct transaction hash (for fallback method)
-  const [directTxHash, setDirectTxHash] = useState<`0x${string}` | null>(null)
-  // Flag to prevent duplicate transaction processing
-  const [isProcessingTx, setIsProcessingTx] = useState(false)
-
-  // Helper function to process transaction success (declared early for use in useEffect)
-  const processTransactionSuccess = useCallback(async (txHash: `0x${string}`, postId: string) => {
-    // Prevent duplicate processing
-    if (isProcessingTx) {
-      console.log('Transaction already being processed, skipping...')
-      return
-    }
-    
-    setIsProcessingTx(true)
-    try {
-      console.log('Processing transaction success for hash:', txHash)
-      const { createPublicClient, http, parseEventLogs } = await import('viem')
-      const { base, baseSepolia } = await import('wagmi/chains')
-      const { contractAddress, contractABI } = await import('@/lib/onchain')
-      
-      // Determine network from RPC URL
-      const rpcUrl = typeof window !== 'undefined'
-        ? (process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org')
-        : 'https://mainnet.base.org'
-      const isMainnetCheck = !rpcUrl.includes('sepolia')
-      const chain = isMainnetCheck ? base : baseSepolia
-      
-      const client = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-      })
-
-      const receipt = await client.getTransactionReceipt({ hash: txHash })
-      console.log('Transaction receipt received:', receipt)
-      
-      // Extract tokenId (same logic as before)
-      let tokenId: number | null = null
-      try {
-        const parsed = parseEventLogs({
-          abi: contractABI,
-          logs: receipt.logs,
-          eventName: 'Transfer',
-        })
-        if (parsed.length > 0 && parsed[0].args.tokenId) {
-          tokenId = Number(parsed[0].args.tokenId)
-        }
-      } catch (e) {
-        console.warn('Event parsing failed, using fallback:', e)
-      }
-
-      if (!tokenId) {
-        const nextId = await client.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: 'nextTokenId',
-        })
-        tokenId = Number(nextId) - 1
-      }
-
-      if (!tokenId || tokenId < 1) {
-        throw new Error('Failed to extract valid tokenId from transaction')
-      }
-
-      // Update post
-      const updateResponse = await fetch(`/api/posts/${postId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mintStatus: 'success', tokenId }),
-      })
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to update post with tokenId')
-      }
-
-      setMintStatus('success')
-      setText('')
-      setIsSubmitting(false)
-      setPendingPostId(null)
-      setIsProcessingTx(false)
-      onPostCreated()
-      setTimeout(() => setMintStatus('idle'), 2000)
-    } catch (error) {
-      console.error('Failed to process transaction success:', error)
-      setIsProcessingTx(false)
-      throw error
-    }
-  }, [onPostCreated, isProcessingTx])
-
-  // Fallback: Direct ethereum transaction via window.ethereum
-  const mintViaDirectCall = useCallback(async (to: Address, tokenURI: string): Promise<string> => {
-    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null
-    if (!ethereum) {
-      throw new Error('Ethereum provider not available')
-    }
-
-    console.log('Using direct ethereum call for minting...')
-    
-    const { encodeFunctionData } = await import('viem')
-    const { contractABI, contractAddress } = await import('@/lib/onchain')
-    
-    // Encode the function call
-    const data = encodeFunctionData({
-      abi: contractABI,
-      functionName: 'mintTo',
-      args: [to, tokenURI],
-    })
-
-    console.log('Encoded function data:', data)
-
-    // Get current chain ID
-    const currentChainId = await ethereum.request({ method: 'eth_chainId' }) as string
-    console.log('Current chain ID from ethereum:', currentChainId)
-    
-    // Ensure we're on the correct chain
-    const targetChainIdHex = `0x${targetChain.id.toString(16)}`
-    if (currentChainId !== targetChainIdHex) {
-      console.log('Switching chain via ethereum provider...')
-      try {
-        await ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainIdHex }],
-        })
-        // Wait for chain switch
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          // Chain not added, try to add it
-          await ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: targetChainIdHex,
-              chainName: targetChain.name,
-              nativeCurrency: {
-                name: 'Ether',
-                symbol: 'ETH',
-                decimals: 18,
-              },
-              rpcUrls: [rpcUrl],
-              blockExplorerUrls: [targetChain.blockExplorers?.default?.url || 'https://basescan.org'],
-            }],
-          })
-        } else {
-          throw switchError
-        }
-      }
-    }
-
-    // Send transaction with mint fee (0.0001 ETH = ~0.05 USD)
-    const MINT_FEE = '0x16345785D8A0000' // 0.0001 ETH in hex (100000000000000 wei)
-    const txHash = await ethereum.request({
-      method: 'eth_sendTransaction',
-      params: [{
-        from: address,
-        to: contractAddress,
-        data: data,
-        value: MINT_FEE, // Mint fee: 0.0001 ETH
-      }],
-    }) as string
-
-    console.log('Transaction sent via direct call, hash:', txHash)
-    return txHash
-  }, [address, targetChain, rpcUrl])
-
-  // Monitor when writeContract is actually called and hash is generated
-  useEffect(() => {
-    if (hash && mintStatus === 'minting') {
-      console.log('Transaction hash received from wagmi:', hash)
-      setMintStatus('minting') // Ensure status is still minting
-    }
-  }, [hash, mintStatus])
-
-  // Handle direct ethereum transactions (fallback method)
-  useEffect(() => {
-    if (directTxHash && pendingPostId && mintStatus === 'minting') {
-      console.log('Processing direct ethereum transaction:', directTxHash)
-      
-      const processDirectTx = async () => {
-        try {
-          await processTransactionSuccess(directTxHash, pendingPostId)
-          setDirectTxHash(null) // Clear after processing
-        } catch (error) {
-          console.error('Failed to process direct transaction:', error)
-          setMintStatus('error')
-          setIsSubmitting(false)
-          setPendingPostId(null)
-          setDirectTxHash(null)
-        }
-      }
-      
-      processDirectTx()
-    }
-  }, [directTxHash, pendingPostId, mintStatus, processTransactionSuccess])
-
-  // Handle write errors
-  useEffect(() => {
-    if (writeError && mintStatus === 'minting') {
-      console.error('Mint transaction error:', writeError)
-      setMintStatus('error')
-      setIsSubmitting(false)
-      setPendingPostId(null)
-      const errorMessage = writeError.message || 'Unknown error'
-      console.error('Full error details:', writeError)
-      alert(`Mint failed: ${errorMessage}. Please check your wallet connection and network.`)
-    }
-  }, [writeError, mintStatus])
-
-  // Handle receipt errors
-  useEffect(() => {
-    if (receiptError && mintStatus === 'minting') {
-      console.error('Transaction receipt error:', receiptError)
-      setMintStatus('error')
-      setIsSubmitting(false)
-      setPendingPostId(null)
-      alert(`Transaction failed: ${receiptError.message || 'Unknown error'}`)
-    }
-  }, [receiptError, mintStatus])
-
-  // Handle transaction confirmation (wagmi hook) - use processTransactionSuccess to avoid duplication
-  useEffect(() => {
-    if (isSuccess && mintStatus === 'minting' && hash && pendingPostId && !isProcessingTx) {
-      processTransactionSuccess(hash, pendingPostId).catch((error) => {
-        console.error('Failed to process transaction success:', error)
-        setMintStatus('error')
-        setIsSubmitting(false)
-        setPendingPostId(null)
-        setIsProcessingTx(false)
-        alert(`Transaction confirmed but failed to process: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      })
-    }
-  }, [isSuccess, hash, mintStatus, pendingPostId, isProcessingTx, processTransactionSuccess])
-
   const remainingChars = 280 - text.length
-  const canSubmit = text.trim().length > 0 && text.length <= 280 && !isSubmitting && address
+  const canSubmit = text.trim().length > 0 && text.length <= 280 && !isSubmitting
 
   return (
-    <div className="mb-4">
-      <form onSubmit={handleSubmit} className="pixel-card">
-        <div className="flex flex-col gap-2">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What's on your mind? (max 280 chars)"
-            maxLength={280}
-            className="pixel-input w-full resize-none"
-            disabled={isSubmitting}
-            style={{ 
-              fontSize: '16px', 
-              lineHeight: '1.4',
-              transform: 'scale(0.625)',
-              transformOrigin: 'left top',
-              width: '160%',
-              minHeight: '80px', // Увеличено
-              maxHeight: '160px', // Увеличено
-            }}
-          />
-          <div className="flex items-center justify-between">
-            <span className={`text-xs ${remainingChars < 20 ? 'text-pixel-yellow' : ''}`}>
-              {remainingChars} chars
+    <form onSubmit={handleSubmit} className="mb-6">
+      <div className="bg-pixel-gray border-2 border-pixel-dark rounded-lg p-4">
+        <textarea
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value)
+            setError(null)
+          }}
+          placeholder="What's on your mind?"
+          className="w-full bg-transparent text-white placeholder-pixel-light resize-none outline-none mb-3"
+          rows={4}
+          maxLength={280}
+          disabled={isSubmitting}
+        />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className={`text-xs ${remainingChars < 20 ? 'text-red-500' : 'text-pixel-light'}`}>
+              {remainingChars}
             </span>
-            <div className="flex items-center gap-2">
-              {!isConnected && (
-                <span className="text-xs text-pixel-yellow">Connect wallet</span>
-              )}
-              {isConnected && !isCorrectChain && (
-                <span className="text-xs text-pixel-yellow">Switch to {targetChain.name}</span>
-              )}
-              {mintStatus === 'creating' && (
-                <span className="text-xs text-pixel-teal">Creating post...</span>
-              )}
-              {(mintStatus === 'minting' || isWriting || isConfirming) && (
-                <span className="text-xs text-pixel-teal">
-                  {isWriting ? 'Sending transaction...' : isConfirming ? 'Confirming...' : 'Minting...'}
-                </span>
-              )}
-              {mintStatus === 'success' && (
-                <span className="text-xs text-pixel-yellow">✓ Minted!</span>
-              )}
-              {mintStatus === 'error' && (
-                <span className="text-xs text-red-500">✗ Error</span>
-              )}
-            </div>
+            {error && (
+              <span className="text-xs text-red-500">{error}</span>
+            )}
+            {isSubmitting && (
+              <span className="text-xs text-pixel-teal">Creating post...</span>
+            )}
           </div>
+          
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={`px-4 py-2 rounded border-2 font-bold transition-colors ${
+              canSubmit
+                ? 'bg-pixel-yellow text-pixel-dark border-pixel-dark hover:bg-pixel-yellow/80'
+                : 'bg-pixel-gray text-pixel-light border-pixel-dark cursor-not-allowed'
+            }`}
+          >
+            Post
+          </button>
         </div>
-      </form>
-      <button
-        type="button"
-        onClick={() => handleSubmit()}
-        disabled={!canSubmit}
-        className="pixel-button w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-300 hover:bg-blue-400"
-      >
-        {isSubmitting ? 'Publishing...' : 'Publish'}
-      </button>
-    </div>
+      </div>
+    </form>
   )
 }
-
