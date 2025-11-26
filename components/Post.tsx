@@ -190,7 +190,7 @@ export function Post({
           
           <div className="mt-8 relative">
             <div className={`border-3 border-black rounded-lg p-5 shadow-lg relative ml-[30px] -mt-[5px] ${
-              isAdmin ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
+              isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 'bg-white'
             }`}>
               {canEdit && !isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
@@ -254,7 +254,7 @@ export function Post({
             
             <div className="absolute -left-[30px] top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
             <div className={`absolute -left-[34px] top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
-              isAdmin ? 'border-r-yellow-400' : 'border-r-black'
+              isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
             }`}></div>
           </div>
 
