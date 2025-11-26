@@ -9,6 +9,14 @@ export const metadata: Metadata = {
     title: 'The Wall Base',
     description: 'A hybrid NFT + off-chain social feed on Base',
     type: 'website',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'The Wall Base - NFT Social Feed',
+      },
+    ],
   },
   other: {
     'fc:miniapp': process.env.NEXT_PUBLIC_MINIAPP_URL || '',
