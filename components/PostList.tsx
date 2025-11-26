@@ -34,10 +34,8 @@ export function PostList({ onEdit }: PostListProps) {
               setCurrentUserUsername(context.user.username)
             }
           }
-          // Try to get address from account
-          if (context?.account) {
-            setCurrentUserAddress(context.account.address)
-          }
+          // Note: Address is not available in SDK context, admin check will use username
+          // Address can be obtained from wallet connection if needed in the future
         }
       } catch {}
     }
