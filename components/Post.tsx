@@ -20,6 +20,8 @@ interface Post {
   createdAt: string
   likes: number
   dislikes: number
+  isHighlighted?: boolean
+  isHidden?: boolean
 }
 
 interface PostProps {
@@ -49,13 +51,13 @@ export function Post({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(post.text)
+  const [isHighlighting, setIsHighlighting] = useState(false)
+  const [isHiding, setIsHiding] = useState(false)
 
   const author = post.author || { address: post.authorAddress }
   const canEdit = currentUserFid && post.author?.fid === currentUserFid
   const currentUserIsAdmin = currentUserUsername === ADMIN_USERNAME
-  const isAdminPost = currentUserIsAdmin && (author?.username === ADMIN_USERNAME || 
-                      author?.address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase() ||
-                      post.authorAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  const isHighlighted = post.isHighlighted || false
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) {
@@ -155,6 +157,52 @@ export function Post({
     setEditText(post.text)
   }
 
+  const handleHighlight = async () => {
+    if (!currentUserIsAdmin) return
+
+    setIsHighlighting(true)
+    try {
+      const response = await fetch(`/api/posts/${post.id}/highlight?username=${currentUserUsername || ''}`, {
+        method: 'PUT'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to highlight post')
+      }
+
+      const updated = await response.json()
+      onEdit({ ...post, isHighlighted: updated.isHighlighted })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to highlight post')
+    } finally {
+      setIsHighlighting(false)
+    }
+  }
+
+  const handleHide = async () => {
+    if (!currentUserIsAdmin) return
+
+    if (!window.confirm('Hide this post? It will be invisible to all users.')) {
+      return
+    }
+
+    setIsHiding(true)
+    try {
+      const response = await fetch(`/api/posts/${post.id}/hide?username=${currentUserUsername || ''}`, {
+        method: 'PUT'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to hide post')
+      }
+
+      onDelete(post.id)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to hide post')
+      setIsHiding(false)
+    }
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -195,7 +243,7 @@ export function Post({
           
           <div className="mt-[28px] relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
-              isAdminPost ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
+              isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
             } ${canEdit ? 'scale-110 ml-[-60px]' : ''}`} style={{ 
               paddingTop: canEdit ? '12px' : '10px',
@@ -221,16 +269,36 @@ export function Post({
                 </div>
               )}
               
-              {currentUserIsAdmin && !canEdit && (
-                <div className="absolute top-2 right-2">
+              {currentUserIsAdmin && (
+                <div className="absolute top-2 right-2 flex gap-2 items-center">
                   <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
-                    title="Admin: Delete any post"
+                    onClick={handleHighlight}
+                    disabled={isHighlighting}
+                    className={`text-sm disabled:opacity-50 px-2 py-1 font-bold transition-colors ${
+                      isHighlighted ? 'text-yellow-600' : 'text-gray-400 hover:text-yellow-500'
+                    }`}
+                    title={isHighlighted ? 'Remove highlight' : 'Highlight post (gold)'}
                   >
-                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
+                    {isHighlighting ? '...' : '⭐'}
                   </button>
+                  <button
+                    onClick={handleHide}
+                    disabled={isHiding}
+                    className="text-gray-500 hover:text-gray-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
+                    title="Hide post (moderation)"
+                  >
+                    {isHiding ? '...' : '👁️'}
+                  </button>
+                  {!canEdit && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1 font-bold"
+                      title="Admin: Delete any post"
+                    >
+                      {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : '🗑️'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -264,10 +332,10 @@ export function Post({
             </div>
             
             <div className={`absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
-              isAuthor ? 'border-r-lime-100' : isAdminPost ? 'border-r-yellow-200' : 'border-r-white'
+              isAuthor ? 'border-r-lime-100' : isHighlighted ? 'border-r-yellow-200' : 'border-r-white'
             }`}></div>
             <div className={`absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
-              isAdminPost ? 'border-r-yellow-400' : 'border-r-black'
+              isHighlighted ? 'border-r-yellow-400' : 'border-r-black'
             }`}></div>
           </div>
 

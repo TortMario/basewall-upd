@@ -94,10 +94,11 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
     const allPosts = await kv.getPosts(1000, 0)
-    allPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    const paginatedPosts = allPosts.slice(offset, offset + limit)
+    const visiblePosts = allPosts.filter(post => !post.isHidden)
+    visiblePosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    const paginatedPosts = visiblePosts.slice(offset, offset + limit)
 
-    return NextResponse.json({ posts: paginatedPosts, total: allPosts.length })
+    return NextResponse.json({ posts: paginatedPosts, total: visiblePosts.length })
   } catch {
     return NextResponse.json({ posts: [], error: 'Failed to fetch posts' })
   }

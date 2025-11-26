@@ -16,6 +16,8 @@ export interface Post {
   createdAt: string
   likes: number
   dislikes: number
+  isHighlighted?: boolean
+  isHidden?: boolean
 }
 
 export interface Reaction {

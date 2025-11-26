@@ -150,6 +150,10 @@ export function PostList({ onEdit }: PostListProps) {
     setPosts((prev) => prev.filter((post) => post.id !== postId))
   }
 
+  const handleEdit = (updatedPost: PostType) => {
+    setPosts((prev) => prev.map((post) => post.id === updatedPost.id ? updatedPost : post))
+  }
+
   if (loading && posts.length === 0) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -166,7 +170,7 @@ export function PostList({ onEdit }: PostListProps) {
           post={post}
           userReaction={userReactions[post.id]}
           onReaction={handleReaction}
-          onEdit={onEdit}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           currentUserFid={currentUserFid}
           currentUserUsername={currentUserUsername}
