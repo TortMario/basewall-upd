@@ -273,32 +273,60 @@ export function Post({
   const isAuthorOfHiddenPost = isAuthor && isHidden
   const isAdminViewingHidden = currentUserIsAdmin && isHidden && !isAuthor
 
+  const displayName = author?.displayName || author?.username
+  const truncatedName = displayName && displayName.length > 15 
+    ? `${displayName.slice(0, 15)}...` 
+    : displayName
+
   return (
     <div className={`mb-6 ${isAdminViewingHidden ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center">
+        {/* Avatar only */}
+        <div className="flex flex-col">
           <button
             onClick={handleProfileClick}
             className="flex-shrink-0 hover:opacity-80 transition-opacity"
           >
-            <AvatarName
-              author={author}
-              address={undefined}
-              size="md"
-            />
+            <div className="pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 w-16 h-16 flex items-center justify-center">
+              {author?.pfp ? (
+                <img 
+                  src={author.pfp}
+                  alt={truncatedName || 'Avatar'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs">
+                  {author?.fid ? `F${author.fid}` : '?'}
+                </div>
+              )}
+            </div>
           </button>
         </div>
         
+        {/* Name and frame container - aligned to left */}
         <div className="flex-1 relative">
           <div className="absolute top-0 right-0 text-xs text-gray-500">
             {formatDate(post.createdAt)}
           </div>
           
-          <div className="mt-[28px] relative">
+          {/* Name at top, aligned with avatar top */}
+          {truncatedName && (
+            <div className="mb-1">
+              <button
+                onClick={handleProfileClick}
+                className="text-sm text-black font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] hover:opacity-80 transition-opacity"
+              >
+                {truncatedName}
+              </button>
+            </div>
+          )}
+          
+          {/* Frame starts below the name, left edge aligns with name start */}
+          <div className="relative">
             <div className={`border-3 border-black rounded-lg shadow-lg relative ${
               isHighlighted ? 'bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400' : 
               isAuthor ? 'bg-lime-100' : 'bg-white'
-            } ml-[-65px] ${isAuthorOfHiddenPost ? 'border-gray-400' : ''}`} style={{ 
+            } ${isAuthorOfHiddenPost ? 'border-gray-400' : ''}`} style={{ 
               paddingTop: '10px',
               paddingRight: '35px',
               paddingBottom: '35px',
@@ -353,13 +381,6 @@ export function Post({
                 </div>
               )}
             </div>
-            
-            <div className={`absolute left-0 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${
-              isAuthor ? 'border-r-lime-100' : isHighlighted ? 'border-r-yellow-200' : 'border-r-white'
-            }`}></div>
-            <div className={`absolute -left-2 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 ${
-              isHighlighted ? 'border-r-yellow-400' : 'border-r-black'
-            }`}></div>
           </div>
 
           <div className="flex items-center justify-end gap-3 mt-1 overflow-visible relative z-10">

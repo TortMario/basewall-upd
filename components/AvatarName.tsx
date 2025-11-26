@@ -45,7 +45,7 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
 
   return (
     <div
-      className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+      className="flex items-start gap-2 cursor-pointer hover:opacity-80 transition-opacity"
       onClick={onClick}
     >
       <div className={`pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 ${sizeClasses[size]} flex items-center justify-center`}>
@@ -65,7 +65,7 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
         )}
       </div>
       {truncatedName && (
-        <span className="text-sm text-black font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+        <span className="text-sm text-black font-semibold leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] pt-0">
           {truncatedName}
         </span>
       )}
