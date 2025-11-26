@@ -162,103 +162,103 @@ export function Post({
 
   return (
     <div className="mb-6">
-      <div className="flex items-start gap-3 mb-2">
-        <button
-          onClick={handleProfileClick}
-          className="flex-shrink-0 hover:opacity-80 transition-opacity"
-        >
-          <AvatarName
-            author={author}
-            address={post.authorAddress || undefined}
-            size="md"
-          />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-gray-900 text-lg">
-              {author?.displayName || author?.username || `User ${post.authorAddress.slice(0, 6)}`}
-            </span>
-            <span className="text-sm text-gray-500">{formatDate(post.createdAt)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative">
-        <div className="bg-white border-3 border-black rounded-lg p-4 shadow-lg relative">
-          {canEdit && !isEditing && (
-            <div className="absolute top-2 right-2 flex gap-2">
-              <button
-                onClick={handleEditClick}
-                className="text-gray-600 hover:text-black text-sm px-2 py-1"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
-              >
-                {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
-              </button>
-            </div>
-          )}
-
-          {isEditing ? (
-            <div>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full bg-white border-2 border-gray-300 rounded p-3 text-black resize-none text-base"
-                rows={4}
-                maxLength={280}
-              />
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={handleEditSave}
-                  className="px-4 py-2 bg-yellow-400 text-black rounded font-bold hover:bg-yellow-500 border-2 border-black"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleEditCancel}
-                  className="px-4 py-2 bg-gray-200 border-2 border-black text-black rounded font-bold hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-black text-base leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
-          )}
+      <div className="flex items-start gap-3">
+        <div className="flex flex-col items-center">
+          <button
+            onClick={handleProfileClick}
+            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+          >
+            <AvatarName
+              author={author}
+              address={undefined}
+              size="md"
+            />
+          </button>
         </div>
         
-        <div className="absolute -bottom-2 left-8 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-white"></div>
-        <div className="absolute -bottom-4 left-6 w-0 h-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-t-10 border-t-black"></div>
-      </div>
+        <div className="flex-1 relative">
+          <div className="absolute top-0 right-0 text-xs text-gray-500">
+            {formatDate(post.createdAt)}
+          </div>
+          
+          <div className="mt-6 relative">
+            <div className="bg-white border-3 border-black rounded-lg p-4 shadow-lg relative ml-4">
+              {canEdit && !isEditing && (
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button
+                    onClick={handleEditClick}
+                    className="text-gray-600 hover:text-black text-sm px-2 py-1"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50 px-2 py-1"
+                  >
+                    {showDeleteConfirm ? (isDeleting ? 'Deleting...' : 'Confirm?') : 'Delete'}
+                  </button>
+                </div>
+              )}
 
-      <div className="flex items-center justify-end gap-3 mt-1">
-        <button
-          onClick={() => onReaction(post.id, 'like')}
-          className={`flex items-center gap-1.5 text-sm transition-colors ${
-            userReaction === 'like'
-              ? 'text-yellow-500'
-              : 'text-gray-600 hover:text-yellow-500'
-          }`}
-        >
-          <span className="text-lg">👍</span>
-          <span className="font-bold">{post.likes}</span>
-        </button>
-        <button
-          onClick={() => onReaction(post.id, 'dislike')}
-          className={`flex items-center gap-1.5 text-sm transition-colors ${
-            userReaction === 'dislike'
-              ? 'text-red-500'
-              : 'text-gray-600 hover:text-red-500'
-          }`}
-        >
-          <span className="text-lg">👎</span>
-          <span className="font-bold">{post.dislikes}</span>
-        </button>
+              {isEditing ? (
+                <div>
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full bg-white border-2 border-gray-300 rounded p-3 text-black resize-none text-base"
+                    rows={4}
+                    maxLength={280}
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={handleEditSave}
+                      className="px-4 py-2 bg-yellow-400 text-black rounded font-bold hover:bg-yellow-500 border-2 border-black"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleEditCancel}
+                      className="px-4 py-2 bg-gray-200 border-2 border-black text-black rounded font-bold hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-black text-base leading-relaxed whitespace-pre-wrap break-words">{post.text}</p>
+              )}
+            </div>
+            
+            <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+            <div className="absolute -left-4 top-3 w-0 h-0 border-t-10 border-t-transparent border-b-10 border-b-transparent border-r-10 border-r-black"></div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 mt-1">
+            <button
+              onClick={() => onReaction(post.id, 'like')}
+              className={`flex items-center gap-1.5 text-sm transition-colors ${
+                userReaction === 'like'
+                  ? 'text-yellow-500'
+                  : 'text-gray-600 hover:text-yellow-500'
+              }`}
+            >
+              <span className="text-lg">👍</span>
+              <span className="font-bold">{post.likes}</span>
+            </button>
+            <button
+              onClick={() => onReaction(post.id, 'dislike')}
+              className={`flex items-center gap-1.5 text-sm transition-colors ${
+                userReaction === 'dislike'
+                  ? 'text-red-500'
+                  : 'text-gray-600 hover:text-red-500'
+              }`}
+            >
+              <span className="text-lg">👎</span>
+              <span className="font-bold">{post.dislikes}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

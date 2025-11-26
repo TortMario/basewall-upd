@@ -39,9 +39,11 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
     lg: 'w-12 h-12 text-sm',
   }
 
+  const displayText = displayName || (fid ? `F${fid}` : address ? `${typeof address === 'string' ? address : address}`.slice(0, 6) : 'User')
+
   return (
     <div
-      className="flex items-start gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+      className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
       onClick={onClick}
     >
       <div className={`pixel-border rounded-full overflow-hidden bg-white flex-shrink-0 ${sizeClasses[size]} flex items-center justify-center`}>
@@ -60,9 +62,7 @@ export function AvatarName({ address, author, onClick, size = 'md' }: AvatarName
           </div>
         )}
       </div>
-      {displayName && (
-        <span className="text-sm text-black font-semibold pt-0">{displayName}</span>
-      )}
+      <span className="text-xs text-black font-semibold mt-1 text-center max-w-[60px] truncate">{displayText}</span>
     </div>
   )
 }
