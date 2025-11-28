@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           break
 
         default:
-          console.log('Unknown event type:', event.event)
+          console.log('Unknown event type:', (event as any).event)
       }
     } catch (error) {
       console.error('Error processing webhook event:', error)
