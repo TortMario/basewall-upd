@@ -37,6 +37,19 @@ export const metadata: Metadata = {
         },
       },
     }),
+    // Also add fc:frame for embed rendering compatibility
+    'fc:frame': JSON.stringify({
+      version: 'next',
+      imageUrl: heroImageUrl,
+      button: {
+        title: 'Open The Wall Base',
+        action: {
+          type: 'launch_miniapp',
+          name: 'The Wall Base',
+          url: miniappUrl,
+        },
+      },
+    }),
   },
 }
 

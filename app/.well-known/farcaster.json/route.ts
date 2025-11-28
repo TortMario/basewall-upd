@@ -1,0 +1,47 @@
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const manifest = {
+    accountAssociation: {
+      header: "eyJmaWQiOjExNzczOTksInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg0RDZCNkFjQzlDMTYxMDRDNjY5QzIwNzMyMmYwMWRDMzhFMjM0MTBiIn0",
+      payload: "eyJkb21haW4iOiJiYXNld2FsbC52ZXJjZWwuYXBwIn0",
+      signature: "SvWrZ4q6PM7jZKgjLfB05PIrd3g3JW9dkeswaGRULBx4+uUkqtjAV8zD3fD6DA2ITO2pELn+GGDSClnLMoZsuhw="
+    },
+    baseBuilder: {
+      ownerAddress: ""
+    },
+    miniapp: {
+      version: "1",
+      name: "The Wall Base",
+      homeUrl: "https://basewall.vercel.app",
+      iconUrl: "https://basewall.vercel.app/icon.png",
+      splashImageUrl: "https://basewall.vercel.app/splash.png",
+      splashBackgroundColor: "#1e293b",
+      subtitle: "Social Feed",
+      description: "A social feed on Base. Create and share posts with the community.",
+      screenshotUrls: [
+        "https://basewall.vercel.app/1.jpg",
+        "https://basewall.vercel.app/2.jpg",
+        "https://basewall.vercel.app/3.jpg"
+      ],
+      primaryCategory: "social",
+      tags: ["social", "base", "feed"],
+      heroImageUrl: "https://basewall.vercel.app/og.png",
+      tagline: "Create and share posts",
+      ogTitle: "The Wall Base",
+      ogDescription: "Social Feed on Base - Create and share posts with the community",
+      ogImageUrl: "https://basewall.vercel.app/og.png",
+      noindex: false,
+      webhookUrl: "https://basewall.vercel.app/api/webhook"
+    }
+  }
+
+  return NextResponse.json(manifest, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600, must-revalidate',
+      'Access-Control-Allow-Origin': '*',
+    },
+  })
+}
+
