@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.5.0",
+    "@farcaster/miniapp-node": "^0.1.11",
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.28.0",
@@ -49,5 +50,8 @@
     "tailwindcss": "^3.4.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0"
+  },
+  "overrides": {
+    "@base-org/account": "latest"
   }
 }

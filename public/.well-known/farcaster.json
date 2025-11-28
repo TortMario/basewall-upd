@@ -16,6 +16,11 @@
     "splashBackgroundColor": "#1e293b",
     "subtitle": "Social Feed",
     "description": "A social feed on Base. Create and share posts with the community.",
+    "screenshotUrls": [
+      "https://basewall.vercel.app/1.jpg",
+      "https://basewall.vercel.app/2.jpg",
+      "https://basewall.vercel.app/3.jpg"
+    ],
     "primaryCategory": "social",
     "tags": ["social", "base", "feed"],
     "heroImageUrl": "https://basewall.vercel.app/og.png",
@@ -23,6 +28,7 @@
     "ogTitle": "The Wall Base",
     "ogDescription": "Social Feed on Base - Create and share posts with the community",
     "ogImageUrl": "https://basewall.vercel.app/og.png",
-    "noindex": false
+    "noindex": false,
+    "webhookUrl": "https://basewall.vercel.app/api/webhook"
   }
 }
