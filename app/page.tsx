@@ -16,15 +16,73 @@ export default function Home() {
   useEffect(() => {
     const checkMiniApp = async () => {
       try {
+        // Check if we're in a mini app
         const status = await sdk.isInMiniApp()
-        setIsInMiniApp(status)
-        // Call ready() only if we're in a mini app to hide splash screen
-        if (status) {
-          await sdk.actions.ready()
+        
+        // Also check context to detect Base App even if isInMiniApp returns false
+        let context = null
+        try {
+          context = await sdk.context
+          console.log('SDK context:', context)
+        } catch {
+          // Context might not be available
+        }
+        
+        // Check for Base App indicators
+        const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : ''
+        const referrer = typeof window !== 'undefined' ? document.referrer : ''
+        const isBaseAppUA = userAgent.includes('BaseApp') || userAgent.includes('Farcaster')
+        const isBaseAppReferrer = referrer.includes('base.app') || referrer.includes('farcaster')
+        
+        console.log('Mini app detection:', {
+          isInMiniApp: status,
+          hasContext: context !== null,
+          userAgent: userAgent.substring(0, 100),
+          referrer,
+          isBaseAppUA,
+          isBaseAppReferrer
+        })
+        
+        // Consider it a mini app if:
+        // 1. isInMiniApp returns true, OR
+        // 2. We have context (which means we're in Base App/Farcaster client), OR
+        // 3. User agent or referrer indicates Base App
+        const isActuallyInMiniApp = status || (context !== null && context !== undefined) || isBaseAppUA || isBaseAppReferrer
+        
+        setIsInMiniApp(isActuallyInMiniApp)
+        
+        // Always try to call ready() if we detect any Base App indicators
+        // This ensures the app works even when opened from search
+        if (isActuallyInMiniApp) {
+          try {
+            await sdk.actions.ready()
+            console.log('SDK ready() called successfully')
+          } catch (readyError) {
+            console.warn('SDK ready() failed, but continuing:', readyError)
+            // Continue anyway - app should still work
+          }
         }
       } catch (error) {
         console.error('Error checking mini app status:', error)
-        setIsInMiniApp(false)
+        // Even on error, try to detect Base App and call ready()
+        const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : ''
+        const referrer = typeof window !== 'undefined' ? document.referrer : ''
+        const isBaseApp = userAgent.includes('BaseApp') || 
+                         userAgent.includes('Farcaster') ||
+                         referrer.includes('base.app') ||
+                         referrer.includes('farcaster')
+        
+        if (isBaseApp) {
+          try {
+            await sdk.actions.ready()
+            setIsInMiniApp(true)
+            console.log('SDK ready() called via fallback detection')
+          } catch {
+            setIsInMiniApp(false)
+          }
+        } else {
+          setIsInMiniApp(false)
+        }
       }
     }
     checkMiniApp()
