@@ -29,9 +29,11 @@ export const metadata: Metadata = {
       button: {
         title: 'Open The Wall Base',
         action: {
-          type: 'launch_frame',
-          url: miniappUrl,
+          type: 'launch_miniapp',
           name: 'The Wall Base',
+          url: miniappUrl,
+          splashImageUrl: 'https://basewall.vercel.app/splash.png',
+          splashBackgroundColor: '#1e293b',
         },
       },
     }),

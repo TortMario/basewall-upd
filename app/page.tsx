@@ -18,12 +18,18 @@ export default function Home() {
       try {
         const status = await sdk.isInMiniApp()
         setIsInMiniApp(status)
-        if (status) {
-          await sdk.actions.ready()
-        }
+        // Always call ready() to hide splash screen, even if not in mini app
+        // This ensures proper display when opened from Base app
+        await sdk.actions.ready()
       } catch (error) {
         console.error('Error checking mini app status:', error)
         setIsInMiniApp(false)
+        // Still call ready() even on error to ensure app displays
+        try {
+          await sdk.actions.ready()
+        } catch {
+          // Ignore errors if SDK is not available
+        }
       }
     }
     checkMiniApp()
