@@ -20,30 +20,58 @@ export default function Home() {
     const checkMiniApp = async () => {
       try {
         // Check if we're in a mini app - this is the primary check
-        const status = await sdk.isInMiniApp()
-        
-        // Also check context - if it resolves (even if empty object), we're in a client
-        let hasContext = false
+        let status = false
         try {
-          const context = await Promise.race([
+          status = await sdk.isInMiniApp()
+        } catch {
+          // If isInMiniApp fails, try other methods
+        }
+        
+        // Check context - if it resolves, we're likely in a client
+        let hasContext = false
+        let contextValue = null
+        try {
+          contextValue = await Promise.race([
             sdk.context,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
           ])
-          hasContext = context !== null && context !== undefined
-          console.log('SDK context available:', hasContext, context)
-        } catch (contextError) {
-          // Context not available or timeout - this is OK
-          console.log('SDK context not available')
+          hasContext = contextValue !== null && contextValue !== undefined
+          console.log('SDK context:', contextValue)
+        } catch {
+          // Context not available - this is OK
+        }
+        
+        // Check if we're in an iframe (common for mini apps)
+        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
+        
+        // Try to call ready() - if it works, we're definitely in a mini app
+        let readyWorks = false
+        if (!status && !hasContext) {
+          try {
+            // Try calling ready() with a short timeout
+            await Promise.race([
+              sdk.actions.ready(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+            ])
+            readyWorks = true
+            console.log('ready() worked - we are in a mini app')
+          } catch {
+            // ready() failed or timed out - probably not in mini app
+          }
         }
         
         // Determine if we're in a mini app
         // Primary: isInMiniApp() returns true
-        // Fallback: context is available (means we're in Base App/Farcaster client)
-        const isActuallyInMiniApp = status || hasContext
+        // Fallback 1: context is available
+        // Fallback 2: ready() works
+        // Fallback 3: we're in an iframe (less reliable)
+        const isActuallyInMiniApp = status || hasContext || readyWorks || isInIframe
         
         console.log('Mini app detection:', {
           isInMiniApp: status,
           hasContext,
+          readyWorks,
+          isInIframe,
           isActuallyInMiniApp
         })
         
@@ -70,19 +98,34 @@ export default function Home() {
         if (timeoutId) {
           clearTimeout(timeoutId)
         }
-        // On error, assume we're not in a mini app
-        setIsInMiniApp(false)
+        // On error, check if we're in iframe as last resort
+        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
+        setIsInMiniApp(isInIframe)
+        
+        // Try ready() anyway if in iframe
+        if (isInIframe) {
+          try {
+            await sdk.actions.ready()
+          } catch {
+            // Ignore
+          }
+        }
       }
     }
     
     // Set a timeout to prevent infinite loading
     timeoutId = setTimeout(() => {
       if (!isResolved) {
-        console.warn('Mini app check timeout - assuming not in mini app')
+        console.warn('Mini app check timeout - checking iframe as fallback')
+        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
         isResolved = true
-        setIsInMiniApp(false)
+        setIsInMiniApp(isInIframe)
+        if (isInIframe) {
+          // Try ready() anyway
+          sdk.actions.ready().catch(() => {})
+        }
       }
-    }, 3000)
+    }, 2000)
     
     checkMiniApp()
     
