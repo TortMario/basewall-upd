@@ -19,59 +19,60 @@ export default function Home() {
     
     const checkMiniApp = async () => {
       try {
-        // Check if we're in a mini app - this is the primary check
+        // Primary check: isInMiniApp()
         let status = false
         try {
-          status = await sdk.isInMiniApp()
-        } catch {
-          // If isInMiniApp fails, try other methods
+          status = await Promise.race([
+            sdk.isInMiniApp(),
+            new Promise<boolean>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+          ])
+        } catch (err) {
+          console.log('isInMiniApp check failed or timed out')
         }
         
-        // Check context - if it resolves, we're likely in a client
+        // Secondary check: context availability
         let hasContext = false
         let contextValue = null
         try {
           contextValue = await Promise.race([
             sdk.context,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
           ])
-          hasContext = contextValue !== null && contextValue !== undefined
-          console.log('SDK context:', contextValue)
-        } catch {
-          // Context not available - this is OK
+          // Context exists if it's not null/undefined and has properties
+          hasContext = contextValue !== null && 
+                       contextValue !== undefined && 
+                       typeof contextValue === 'object'
+          if (hasContext) {
+            console.log('SDK context available:', contextValue)
+          }
+        } catch (err) {
+          console.log('SDK context not available')
         }
         
-        // Check if we're in an iframe (common for mini apps)
-        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
-        
-        // Try to call ready() - if it works, we're definitely in a mini app
+        // Tertiary check: try ready() - if it works without error, we're in mini app
         let readyWorks = false
         if (!status && !hasContext) {
           try {
-            // Try calling ready() with a short timeout
             await Promise.race([
               sdk.actions.ready(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
             ])
             readyWorks = true
-            console.log('ready() worked - we are in a mini app')
-          } catch {
-            // ready() failed or timed out - probably not in mini app
+            console.log('ready() worked - confirmed we are in a mini app')
+          } catch (readyErr) {
+            // ready() failed - not in mini app
+            console.log('ready() failed - not in mini app')
           }
         }
         
-        // Determine if we're in a mini app
-        // Primary: isInMiniApp() returns true
-        // Fallback 1: context is available
-        // Fallback 2: ready() works
-        // Fallback 3: we're in an iframe (less reliable)
-        const isActuallyInMiniApp = status || hasContext || readyWorks || isInIframe
+        // Only consider it a mini app if one of the reliable methods works
+        // Do NOT use iframe check - too many false positives
+        const isActuallyInMiniApp = status || hasContext || readyWorks
         
-        console.log('Mini app detection:', {
+        console.log('Mini app detection result:', {
           isInMiniApp: status,
           hasContext,
           readyWorks,
-          isInIframe,
           isActuallyInMiniApp
         })
         
@@ -82,13 +83,16 @@ export default function Home() {
         
         setIsInMiniApp(isActuallyInMiniApp)
         
-        // Call ready() if we're in a mini app to hide splash screen
+        // Call ready() if we confirmed we're in a mini app
         if (isActuallyInMiniApp) {
           try {
-            await sdk.actions.ready()
+            // Only call if we haven't already called it in the check above
+            if (!readyWorks) {
+              await sdk.actions.ready()
+            }
             console.log('SDK ready() called successfully')
           } catch (readyError) {
-            console.warn('SDK ready() failed:', readyError)
+            console.warn('SDK ready() failed on second call:', readyError)
             // Continue anyway - app should still work
           }
         }
@@ -98,34 +102,19 @@ export default function Home() {
         if (timeoutId) {
           clearTimeout(timeoutId)
         }
-        // On error, check if we're in iframe as last resort
-        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
-        setIsInMiniApp(isInIframe)
-        
-        // Try ready() anyway if in iframe
-        if (isInIframe) {
-          try {
-            await sdk.actions.ready()
-          } catch {
-            // Ignore
-          }
-        }
+        // On error, assume NOT in mini app (strict check)
+        setIsInMiniApp(false)
       }
     }
     
     // Set a timeout to prevent infinite loading
     timeoutId = setTimeout(() => {
       if (!isResolved) {
-        console.warn('Mini app check timeout - checking iframe as fallback')
-        const isInIframe = typeof window !== 'undefined' && window.self !== window.top
+        console.warn('Mini app check timeout - assuming NOT in mini app')
         isResolved = true
-        setIsInMiniApp(isInIframe)
-        if (isInIframe) {
-          // Try ready() anyway
-          sdk.actions.ready().catch(() => {})
-        }
+        setIsInMiniApp(false)
       }
-    }, 2000)
+    }, 3000)
     
     checkMiniApp()
     
