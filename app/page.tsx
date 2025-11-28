@@ -14,78 +14,83 @@ export default function Home() {
   const [isInMiniApp, setIsInMiniApp] = useState<boolean | null>(null)
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null
+    let isResolved = false
+    
     const checkMiniApp = async () => {
       try {
-        // Check if we're in a mini app
+        // Check if we're in a mini app - this is the primary check
         const status = await sdk.isInMiniApp()
         
-        // Also check context to detect Base App even if isInMiniApp returns false
-        let context = null
+        // Also check context - if it resolves (even if empty object), we're in a client
+        let hasContext = false
         try {
-          context = await sdk.context
-          console.log('SDK context:', context)
-        } catch {
-          // Context might not be available
+          const context = await Promise.race([
+            sdk.context,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+          ])
+          hasContext = context !== null && context !== undefined
+          console.log('SDK context available:', hasContext, context)
+        } catch (contextError) {
+          // Context not available or timeout - this is OK
+          console.log('SDK context not available')
         }
         
-        // Check for Base App indicators
-        const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : ''
-        const referrer = typeof window !== 'undefined' ? document.referrer : ''
-        const isBaseAppUA = userAgent.includes('BaseApp') || userAgent.includes('Farcaster')
-        const isBaseAppReferrer = referrer.includes('base.app') || referrer.includes('farcaster')
+        // Determine if we're in a mini app
+        // Primary: isInMiniApp() returns true
+        // Fallback: context is available (means we're in Base App/Farcaster client)
+        const isActuallyInMiniApp = status || hasContext
         
         console.log('Mini app detection:', {
           isInMiniApp: status,
-          hasContext: context !== null,
-          userAgent: userAgent.substring(0, 100),
-          referrer,
-          isBaseAppUA,
-          isBaseAppReferrer
+          hasContext,
+          isActuallyInMiniApp
         })
         
-        // Consider it a mini app if:
-        // 1. isInMiniApp returns true, OR
-        // 2. We have context (which means we're in Base App/Farcaster client), OR
-        // 3. User agent or referrer indicates Base App
-        const isActuallyInMiniApp = status || (context !== null && context !== undefined) || isBaseAppUA || isBaseAppReferrer
+        isResolved = true
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
         
         setIsInMiniApp(isActuallyInMiniApp)
         
-        // Always try to call ready() if we detect any Base App indicators
-        // This ensures the app works even when opened from search
+        // Call ready() if we're in a mini app to hide splash screen
         if (isActuallyInMiniApp) {
           try {
             await sdk.actions.ready()
             console.log('SDK ready() called successfully')
           } catch (readyError) {
-            console.warn('SDK ready() failed, but continuing:', readyError)
+            console.warn('SDK ready() failed:', readyError)
             // Continue anyway - app should still work
           }
         }
       } catch (error) {
         console.error('Error checking mini app status:', error)
-        // Even on error, try to detect Base App and call ready()
-        const userAgent = typeof window !== 'undefined' ? window.navigator.userAgent : ''
-        const referrer = typeof window !== 'undefined' ? document.referrer : ''
-        const isBaseApp = userAgent.includes('BaseApp') || 
-                         userAgent.includes('Farcaster') ||
-                         referrer.includes('base.app') ||
-                         referrer.includes('farcaster')
-        
-        if (isBaseApp) {
-          try {
-            await sdk.actions.ready()
-            setIsInMiniApp(true)
-            console.log('SDK ready() called via fallback detection')
-          } catch {
-            setIsInMiniApp(false)
-          }
-        } else {
-          setIsInMiniApp(false)
+        isResolved = true
+        if (timeoutId) {
+          clearTimeout(timeoutId)
         }
+        // On error, assume we're not in a mini app
+        setIsInMiniApp(false)
       }
     }
+    
+    // Set a timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      if (!isResolved) {
+        console.warn('Mini app check timeout - assuming not in mini app')
+        isResolved = true
+        setIsInMiniApp(false)
+      }
+    }, 3000)
+    
     checkMiniApp()
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
   }, [])
 
   const handlePostCreated = () => {
