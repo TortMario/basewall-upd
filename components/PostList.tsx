@@ -27,22 +27,29 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     const getUserData = async () => {
       try {
+        console.log('🔍 Starting user data load...')
         // Always try to get context - it may be available even if isInMiniApp() is false
         let context = null
         
         try {
+          console.log('🔍 Attempting to get SDK context directly...')
           // Try to get context directly - this works in Base App even if isInMiniApp() returns false
           context = await sdk.context
+          console.log('✅ SDK context received:', context)
         } catch (e) {
+          console.warn('⚠️ Direct context failed, trying isInMiniApp fallback...', e)
           // Context not available, try checking isInMiniApp first
           try {
             const isInMiniApp = await sdk.isInMiniApp()
+            console.log('🔍 isInMiniApp result:', isInMiniApp)
             if (isInMiniApp) {
               // Retry context if confirmed in mini app
+              console.log('🔍 Retrying context after isInMiniApp confirmation...')
               context = await sdk.context
+              console.log('✅ SDK context received (retry):', context)
             }
           } catch (e2) {
-            // Both failed
+            console.warn('⚠️ Both context methods failed:', e2)
           }
         }
         
@@ -54,18 +61,20 @@ export function PostList({ onEdit }: PostListProps) {
           })
           
           if (context.user.fid) {
+            console.log('✅ Setting FID:', context.user.fid)
             setCurrentUserFid(context.user.fid)
           }
           // username comes without @ symbol according to docs
           if (context.user.username) {
+            console.log('✅ Setting username:', context.user.username)
             setCurrentUserUsername(context.user.username)
           }
           // Address is not available in context.user, it comes from wallet
         } else {
-          console.warn('⚠️ Context user not available')
+          console.warn('⚠️ Context user not available, context:', context)
         }
       } catch (error) {
-        console.error('Error getting user data:', error)
+        console.error('❌ Error getting user data:', error)
       }
     }
     getUserData()
