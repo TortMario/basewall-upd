@@ -27,35 +27,80 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     const getUserData = async () => {
       try {
+        console.log('🔍 Starting user data load...')
+        
         // Always try to get context - this works in Base App even if isInMiniApp() is false
         try {
-          const context = await sdk.context
-          if (context && typeof context === 'object' && 'user' in context) {
-            const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
-            const user = contextWithUser.user
-            if (user) {
-              if (user.fid) {
-                setCurrentUserFid(user.fid)
+          console.log('🔍 Attempting to get SDK context...')
+          const context = await Promise.race([
+            sdk.context,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+          ])
+          
+          console.log('🔍 SDK context received:', context)
+          
+          if (context && typeof context === 'object') {
+            console.log('🔍 Context is object, checking for user property...')
+            
+            if ('user' in context) {
+              const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
+              const user = contextWithUser.user
+              
+              console.log('🔍 User object from context:', user)
+              
+              if (user) {
+                console.log('🔍 Setting user data from context:', {
+                  fid: user.fid,
+                  username: user.username,
+                  address: user.address
+                })
+                
+                if (user.fid) {
+                  console.log('✅ Setting FID:', user.fid)
+                  setCurrentUserFid(user.fid)
+                }
+                if (user.username) {
+                  console.log('✅ Setting username:', user.username)
+                  setCurrentUserUsername(user.username)
+                }
+                if (user.address) {
+                  console.log('✅ Setting address:', user.address)
+                  setCurrentUserAddress(user.address)
+                }
+              } else {
+                console.warn('⚠️ User object is null or undefined in context')
               }
-              if (user.username) {
-                setCurrentUserUsername(user.username)
-              }
-              if (user.address) {
-                setCurrentUserAddress(user.address)
-              }
+            } else {
+              console.warn('⚠️ Context does not have user property')
             }
+          } else {
+            console.warn('⚠️ Context is not an object:', typeof context)
           }
         } catch (e) {
+          console.warn('⚠️ Failed to get SDK context:', e)
+          
           // Context not available - try isInMiniApp as fallback
           try {
+            console.log('🔍 Trying isInMiniApp() as fallback...')
             const isInMiniApp = await sdk.isInMiniApp()
+            console.log('🔍 isInMiniApp result:', isInMiniApp)
+            
             if (isInMiniApp) {
               // Retry context if we're confirmed to be in mini app
+              console.log('🔍 Retrying context after isInMiniApp confirmation...')
               const context = await sdk.context
+              
               if (context && typeof context === 'object' && 'user' in context) {
                 const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
                 const user = contextWithUser.user
+                
                 if (user) {
+                  console.log('✅ Setting user data from retried context:', {
+                    fid: user.fid,
+                    username: user.username,
+                    address: user.address
+                  })
+                  
                   if (user.fid) {
                     setCurrentUserFid(user.fid)
                   }
@@ -69,11 +114,11 @@ export function PostList({ onEdit }: PostListProps) {
               }
             }
           } catch (e2) {
-            // Both failed - user data not available
+            console.warn('⚠️ Both context and isInMiniApp failed:', e2)
           }
         }
       } catch (error) {
-        console.error('Error getting user data:', error)
+        console.error('❌ Error getting user data:', error)
       }
     }
     getUserData()
@@ -256,6 +301,24 @@ export function PostList({ onEdit }: PostListProps) {
     (ADMIN_FID && currentUserFid === ADMIN_FID) ||
     normalizedUsername === normalizedAdminUsername || 
     (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  
+  // Debug admin check - log always for troubleshooting
+  useEffect(() => {
+    console.log('🔍 Admin check result:', {
+      currentUserFid,
+      currentUserUsername,
+      normalizedUsername,
+      currentUserAddress,
+      ADMIN_USERNAME,
+      normalizedAdminUsername,
+      ADMIN_ADDRESS,
+      ADMIN_FID,
+      isAdmin,
+      fidMatch: ADMIN_FID ? currentUserFid === ADMIN_FID : false,
+      usernameMatch: normalizedUsername === normalizedAdminUsername,
+      addressMatch: currentUserAddress ? currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase() : false
+    })
+  }, [currentUserFid, currentUserUsername, currentUserAddress, isAdmin])
 
   if (loading && posts.length === 0) {
     return (
