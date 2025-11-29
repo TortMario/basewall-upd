@@ -47,6 +47,12 @@ export function PostList({ onEdit }: PostListProps) {
         }
         
         if (context?.user) {
+          console.log('✅ Context user data loaded:', {
+            fid: context.user.fid,
+            username: context.user.username,
+            displayName: context.user.displayName
+          })
+          
           if (context.user.fid) {
             setCurrentUserFid(context.user.fid)
           }
@@ -55,6 +61,8 @@ export function PostList({ onEdit }: PostListProps) {
             setCurrentUserUsername(context.user.username)
           }
           // Address is not available in context.user, it comes from wallet
+        } else {
+          console.warn('⚠️ Context user not available')
         }
       } catch (error) {
         console.error('Error getting user data:', error)
@@ -234,12 +242,32 @@ export function PostList({ onEdit }: PostListProps) {
   const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0xCdBBdba01063a3A82f1D72Fb601fedFCff808183'
   const ADMIN_FID = process.env.NEXT_PUBLIC_ADMIN_FID ? parseInt(process.env.NEXT_PUBLIC_ADMIN_FID, 10) : undefined
   
-  const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase()
-  const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase()
+  // Normalize: username comes WITHOUT @ from SDK, ADMIN_USERNAME might have @
+  const normalizedUsername = currentUserUsername?.replace(/^@/, '').toLowerCase().trim()
+  const normalizedAdminUsername = ADMIN_USERNAME.replace(/^@/, '').toLowerCase().trim()
+  
   const isAdmin = 
     (ADMIN_FID && currentUserFid === ADMIN_FID) ||
-    normalizedUsername === normalizedAdminUsername || 
+    (normalizedUsername && normalizedUsername === normalizedAdminUsername) ||
     (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Admin check in PostList:', {
+      currentUserFid,
+      currentUserUsername,
+      normalizedUsername,
+      currentUserAddress,
+      ADMIN_USERNAME,
+      normalizedAdminUsername,
+      ADMIN_ADDRESS,
+      ADMIN_FID,
+      isAdmin,
+      fidMatch: ADMIN_FID ? currentUserFid === ADMIN_FID : false,
+      usernameMatch: normalizedUsername === normalizedAdminUsername,
+      addressMatch: currentUserAddress ? currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase() : false
+    })
+  }, [currentUserFid, currentUserUsername, currentUserAddress, isAdmin])
 
   if (loading && posts.length === 0) {
     return (
