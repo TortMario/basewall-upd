@@ -14,96 +14,19 @@ export default function Home() {
   const [isInMiniApp, setIsInMiniApp] = useState<boolean | null>(null)
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null
-    let isResolved = false
-    
     const checkMiniApp = async () => {
       try {
-        // Primary check: isInMiniApp() - most reliable
-        let status = false
-        try {
-          status = await Promise.race([
-            sdk.isInMiniApp(),
-            new Promise<boolean>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
-          ])
-          console.log('isInMiniApp result:', status)
-        } catch (err) {
-          console.log('isInMiniApp check failed or timed out:', err)
-        }
-        
-        // Secondary check: context availability - if context resolves, we're likely in mini app
-        let hasContext = false
-        let contextValue = null
-        try {
-          contextValue = await Promise.race([
-            sdk.context,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-          ])
-          // Context exists if it resolves (even if empty - means we're in a client environment)
-          hasContext = contextValue !== null && contextValue !== undefined
-          if (hasContext) {
-            console.log('SDK context available:', contextValue)
-          }
-        } catch (err) {
-          console.log('SDK context not available:', err)
-        }
-        
-        // Consider it a mini app if:
-        // 1. isInMiniApp() returns true, OR
-        // 2. context is available (means we're in Base App/Farcaster client, even if empty)
-        // This is important for Base App browser where context may be available but isInMiniApp() may be false
-        const isActuallyInMiniApp = status || hasContext
-        
-        console.log('Mini app detection result:', {
-          isInMiniApp: status,
-          hasContext,
-          isActuallyInMiniApp
-        })
-        
-        isResolved = true
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-        }
-        
-        setIsInMiniApp(isActuallyInMiniApp)
-        
-        // Call ready() only if we confirmed we're in a mini app
-        if (isActuallyInMiniApp) {
-          try {
-            await sdk.actions.ready()
-            console.log('SDK ready() called successfully')
-          } catch (readyError) {
-            console.warn('SDK ready() failed:', readyError)
-            // Continue anyway - app should still work
-          }
+        const status = await sdk.isInMiniApp()
+        setIsInMiniApp(status)
+        if (status) {
+          await sdk.actions.ready()
         }
       } catch (error) {
         console.error('Error checking mini app status:', error)
-        isResolved = true
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-        }
-        // On error, assume NOT in mini app (strict check)
         setIsInMiniApp(false)
       }
     }
-    
-    // Set a timeout to prevent infinite loading
-    timeoutId = setTimeout(() => {
-      if (!isResolved) {
-        console.warn('Mini app check timeout - assuming NOT in mini app')
-        isResolved = true
-        setIsInMiniApp(false)
-      }
-    }, 4000)
-    
     checkMiniApp()
-    
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
   }, [])
 
   const handlePostCreated = () => {
