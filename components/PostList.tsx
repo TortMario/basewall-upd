@@ -27,31 +27,49 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     const getUserData = async () => {
       try {
-        // Try multiple ways to get user data
-        let context = null
-        let isInMiniApp = false
-        
+        // Always try to get context - this works in Base App even if isInMiniApp() is false
         try {
-          isInMiniApp = await sdk.isInMiniApp()
-        } catch (e) {
-          // SDK check failed
-        }
-        
-        if (isInMiniApp) {
-          // In Mini App - get data from SDK
-          try {
-            context = await sdk.context
-          } catch (e) {
-            // Context not available
+          const context = await sdk.context
+          if (context && typeof context === 'object' && 'user' in context) {
+            const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
+            const user = contextWithUser.user
+            if (user) {
+              if (user.fid) {
+                setCurrentUserFid(user.fid)
+              }
+              if (user.username) {
+                setCurrentUserUsername(user.username)
+              }
+              if (user.address) {
+                setCurrentUserAddress(user.address)
+              }
+            }
           }
-          
-          if (context?.user) {
-            if (context.user.fid) {
-              setCurrentUserFid(context.user.fid)
+        } catch (e) {
+          // Context not available - try isInMiniApp as fallback
+          try {
+            const isInMiniApp = await sdk.isInMiniApp()
+            if (isInMiniApp) {
+              // Retry context if we're confirmed to be in mini app
+              const context = await sdk.context
+              if (context && typeof context === 'object' && 'user' in context) {
+                const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
+                const user = contextWithUser.user
+                if (user) {
+                  if (user.fid) {
+                    setCurrentUserFid(user.fid)
+                  }
+                  if (user.username) {
+                    setCurrentUserUsername(user.username)
+                  }
+                  if (user.address) {
+                    setCurrentUserAddress(user.address)
+                  }
+                }
+              }
             }
-            if (context.user.username) {
-              setCurrentUserUsername(context.user.username)
-            }
+          } catch (e2) {
+            // Both failed - user data not available
           }
         }
       } catch (error) {

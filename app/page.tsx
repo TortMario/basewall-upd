@@ -16,13 +16,18 @@ export default function Home() {
   useEffect(() => {
     const checkMiniApp = async () => {
       try {
-        const status = await sdk.isInMiniApp()
-        setIsInMiniApp(status)
-        if (status) {
+        // Always try to call ready() - this will work if we're in Base App
+        // and won't break if we're not
+        try {
           await sdk.actions.ready()
+          setIsInMiniApp(true)
+        } catch (readyError) {
+          // If ready() fails, check isInMiniApp() as fallback
+          const status = await sdk.isInMiniApp()
+          setIsInMiniApp(status)
         }
       } catch (error) {
-        console.error('Error checking mini app status:', error)
+        // On any error, assume we're not in mini app but still show the app
         setIsInMiniApp(false)
       }
     }
@@ -40,24 +45,8 @@ export default function Home() {
     setEditingPost(post)
   }
 
-  // Show message if not in mini app
-  if (isInMiniApp === false) {
-    return (
-      <main className="min-h-screen bg-gray-100 p-4 max-w-2xl mx-auto flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">The Wall Base</h1>
-          <p className="text-gray-600 mb-4">
-            Please open this app in a Farcaster or Base client to use it.
-          </p>
-          <p className="text-sm text-gray-500">
-            This mini app is designed to run within the Base app or other Farcaster clients.
-          </p>
-        </div>
-      </main>
-    )
-  }
-
-  // Show loading state while checking
+  // Show loading state only briefly while checking
+  // Always show the app - don't block based on mini app detection
   if (isInMiniApp === null) {
     return (
       <main className="min-h-screen bg-gray-100 p-4 max-w-2xl mx-auto flex items-center justify-center">
