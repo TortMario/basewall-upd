@@ -67,8 +67,8 @@ export function Post({
   
   // Check admin by FID (most reliable), username, or address
   const currentUserIsAdmin = 
-    (ADMIN_FID && currentUserFid === ADMIN_FID) ||
-    normalizedUsername === normalizedAdminUsername || 
+    (ADMIN_FID && currentUserFid && currentUserFid === ADMIN_FID) ||
+    (normalizedUsername && normalizedUsername === normalizedAdminUsername) || 
     (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
   
   // Debug: log admin check (always log for debugging)
@@ -82,7 +82,10 @@ export function Post({
       normalizedAdminUsername,
       currentUserAddress,
       ADMIN_ADDRESS,
-      isAdmin: currentUserIsAdmin
+      isAdmin: currentUserIsAdmin,
+      checkByFid: ADMIN_FID && currentUserFid && currentUserFid === ADMIN_FID,
+      checkByUsername: normalizedUsername && normalizedUsername === normalizedAdminUsername,
+      checkByAddress: currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
     })
   }
   
