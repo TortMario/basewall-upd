@@ -27,44 +27,42 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     const getUserData = async () => {
       try {
-        // Try multiple ways to get user data
+        // Try to get context - this works in Base App even if isInMiniApp() returns false
         let context = null
-        let isInMiniApp = false
-        
         try {
-          isInMiniApp = await sdk.isInMiniApp()
-          console.log('🔍 SDK check:', { isInMiniApp })
+          context = await Promise.race([
+            sdk.context,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ])
+          console.log('🔍 SDK context:', context)
         } catch (e) {
-          console.warn('⚠️ SDK isInMiniApp check failed:', e)
+          console.warn('⚠️ Failed to get SDK context:', e)
         }
         
-        if (isInMiniApp) {
-          // In Mini App - get data from SDK
-          try {
-            context = await sdk.context
-            console.log('🔍 SDK context:', context)
-          } catch (e) {
-            console.warn('⚠️ Failed to get SDK context:', e)
+        // If we have context with user data, use it (even if isInMiniApp() was false)
+        if (context?.user) {
+          console.log('🔍 SDK user:', context.user)
+          if (context.user.fid) {
+            console.log('✅ Setting FID:', context.user.fid)
+            setCurrentUserFid(context.user.fid)
           }
-          
-          if (context?.user) {
-            console.log('🔍 SDK user:', context.user)
-            if (context.user.fid) {
-              console.log('✅ Setting FID:', context.user.fid)
-              setCurrentUserFid(context.user.fid)
-            }
-            if (context.user.username) {
-              console.log('✅ Setting username:', context.user.username)
-              setCurrentUserUsername(context.user.username)
-            } else {
-              console.warn('⚠️ Username not found in SDK context')
-            }
+          if (context.user.username) {
+            console.log('✅ Setting username:', context.user.username)
+            setCurrentUserUsername(context.user.username)
           } else {
-            console.warn('⚠️ User not found in SDK context')
+            console.warn('⚠️ Username not found in SDK context')
           }
         } else {
-          // Not in Mini App - use wallet address for admin check
-          console.log('⚠️ Not in Mini App context - using wallet for admin check')
+          // Fallback: try isInMiniApp check
+          try {
+            const isInMiniApp = await sdk.isInMiniApp()
+            console.log('🔍 SDK check (fallback):', { isInMiniApp })
+            if (!isInMiniApp) {
+              console.log('⚠️ Not in Mini App context - will use wallet for admin check')
+            }
+          } catch (e) {
+            console.warn('⚠️ SDK isInMiniApp check failed:', e)
+          }
         }
       } catch (error) {
         console.error('❌ Error getting user data:', error)

@@ -19,60 +19,45 @@ export default function Home() {
     
     const checkMiniApp = async () => {
       try {
-        // Primary check: isInMiniApp()
+        // Primary check: isInMiniApp() - most reliable
         let status = false
         try {
           status = await Promise.race([
             sdk.isInMiniApp(),
-            new Promise<boolean>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+            new Promise<boolean>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
           ])
+          console.log('isInMiniApp result:', status)
         } catch (err) {
-          console.log('isInMiniApp check failed or timed out')
+          console.log('isInMiniApp check failed or timed out:', err)
         }
         
-        // Secondary check: context availability
-        let hasContext = false
+        // Secondary check: context availability - if context resolves with user data, we're in mini app
+        let hasValidContext = false
         let contextValue = null
         try {
           contextValue = await Promise.race([
             sdk.context,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
           ])
-          // Context exists if it's not null/undefined and has properties
-          hasContext = contextValue !== null && 
-                       contextValue !== undefined && 
-                       typeof contextValue === 'object'
-          if (hasContext) {
-            console.log('SDK context available:', contextValue)
+          // Context is valid if it has user property (not just empty object)
+          hasValidContext = contextValue !== null && 
+                           contextValue !== undefined && 
+                           typeof contextValue === 'object' &&
+                           'user' in contextValue
+          if (hasValidContext) {
+            console.log('SDK context available with user:', contextValue)
           }
         } catch (err) {
-          console.log('SDK context not available')
+          console.log('SDK context not available or invalid')
         }
         
-        // Tertiary check: try ready() - if it works without error, we're in mini app
-        let readyWorks = false
-        if (!status && !hasContext) {
-          try {
-            await Promise.race([
-              sdk.actions.ready(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
-            ])
-            readyWorks = true
-            console.log('ready() worked - confirmed we are in a mini app')
-          } catch (readyErr) {
-            // ready() failed - not in mini app
-            console.log('ready() failed - not in mini app')
-          }
-        }
-        
-        // Only consider it a mini app if one of the reliable methods works
-        // Do NOT use iframe check - too many false positives
-        const isActuallyInMiniApp = status || hasContext || readyWorks
+        // Only consider it a mini app if isInMiniApp() returns true OR context has user
+        // Do NOT use ready() test - it can work in regular browsers too
+        const isActuallyInMiniApp = status || hasValidContext
         
         console.log('Mini app detection result:', {
           isInMiniApp: status,
-          hasContext,
-          readyWorks,
+          hasValidContext,
           isActuallyInMiniApp
         })
         
@@ -83,16 +68,13 @@ export default function Home() {
         
         setIsInMiniApp(isActuallyInMiniApp)
         
-        // Call ready() if we confirmed we're in a mini app
+        // Call ready() only if we confirmed we're in a mini app
         if (isActuallyInMiniApp) {
           try {
-            // Only call if we haven't already called it in the check above
-            if (!readyWorks) {
-              await sdk.actions.ready()
-            }
+            await sdk.actions.ready()
             console.log('SDK ready() called successfully')
           } catch (readyError) {
-            console.warn('SDK ready() failed on second call:', readyError)
+            console.warn('SDK ready() failed:', readyError)
             // Continue anyway - app should still work
           }
         }
@@ -114,7 +96,7 @@ export default function Home() {
         isResolved = true
         setIsInMiniApp(false)
       }
-    }, 3000)
+    }, 4000)
     
     checkMiniApp()
     
