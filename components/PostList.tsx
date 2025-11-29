@@ -27,33 +27,34 @@ export function PostList({ onEdit }: PostListProps) {
   useEffect(() => {
     const getUserData = async () => {
       try {
-        // Try multiple ways to get user data
+        // Always try to get context - it may be available even if isInMiniApp() is false
         let context = null
-        let isInMiniApp = false
         
         try {
-          isInMiniApp = await sdk.isInMiniApp()
+          // Try to get context directly - this works in Base App even if isInMiniApp() returns false
+          context = await sdk.context
         } catch (e) {
-          // SDK check failed
+          // Context not available, try checking isInMiniApp first
+          try {
+            const isInMiniApp = await sdk.isInMiniApp()
+            if (isInMiniApp) {
+              // Retry context if confirmed in mini app
+              context = await sdk.context
+            }
+          } catch (e2) {
+            // Both failed
+          }
         }
         
-        if (isInMiniApp) {
-          // In Mini App - get data from SDK
-          try {
-            context = await sdk.context
-          } catch (e) {
-            // Context not available
+        if (context?.user) {
+          if (context.user.fid) {
+            setCurrentUserFid(context.user.fid)
           }
-          
-          if (context?.user) {
-            if (context.user.fid) {
-              setCurrentUserFid(context.user.fid)
-            }
-            if (context.user.username) {
-              setCurrentUserUsername(context.user.username)
-            }
-            // Address is not available in context.user, it comes from wallet
+          // username comes without @ symbol according to docs
+          if (context.user.username) {
+            setCurrentUserUsername(context.user.username)
           }
+          // Address is not available in context.user, it comes from wallet
         }
       } catch (error) {
         console.error('Error getting user data:', error)
