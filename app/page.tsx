@@ -56,7 +56,7 @@ export default function Home() {
         
         console.log('Mini app detection result:', {
           isInMiniApp: status,
-          hasValidContext,
+          hasContext,
           isActuallyInMiniApp
         })
         
