@@ -31,29 +31,28 @@ export default function Home() {
           console.log('isInMiniApp check failed or timed out:', err)
         }
         
-        // Secondary check: context availability - if context resolves with user data, we're in mini app
-        let hasValidContext = false
+        // Secondary check: context availability - if context resolves, we're likely in mini app
+        let hasContext = false
         let contextValue = null
         try {
           contextValue = await Promise.race([
             sdk.context,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
           ])
-          // Context is valid if it has user property (not just empty object)
-          hasValidContext = contextValue !== null && 
-                           contextValue !== undefined && 
-                           typeof contextValue === 'object' &&
-                           'user' in contextValue
-          if (hasValidContext) {
-            console.log('SDK context available with user:', contextValue)
+          // Context exists if it resolves (even if empty - means we're in a client environment)
+          hasContext = contextValue !== null && contextValue !== undefined
+          if (hasContext) {
+            console.log('SDK context available:', contextValue)
           }
         } catch (err) {
-          console.log('SDK context not available or invalid')
+          console.log('SDK context not available:', err)
         }
         
-        // Only consider it a mini app if isInMiniApp() returns true OR context has user
-        // Do NOT use ready() test - it can work in regular browsers too
-        const isActuallyInMiniApp = status || hasValidContext
+        // Consider it a mini app if:
+        // 1. isInMiniApp() returns true, OR
+        // 2. context is available (means we're in Base App/Farcaster client, even if empty)
+        // This is important for Base App browser where context may be available but isInMiniApp() may be false
+        const isActuallyInMiniApp = status || hasContext
         
         console.log('Mini app detection result:', {
           isInMiniApp: status,

@@ -41,10 +41,14 @@ export function PostList({ onEdit }: PostListProps) {
         
         // If we have context with user data, use it (even if isInMiniApp() was false)
         if (context && typeof context === 'object' && 'user' in context) {
-          const contextWithUser = context as { user?: { fid?: number; username?: string } }
+          const contextWithUser = context as { user?: { fid?: number; username?: string; address?: string } }
           const user = contextWithUser.user
           if (user) {
-            console.log('🔍 SDK user:', user)
+            console.log('🔍 SDK user data:', {
+              fid: user.fid,
+              username: user.username,
+              address: user.address
+            })
             if (user.fid) {
               console.log('✅ Setting FID:', user.fid)
               setCurrentUserFid(user.fid)
@@ -55,8 +59,15 @@ export function PostList({ onEdit }: PostListProps) {
             } else {
               console.warn('⚠️ Username not found in SDK context')
             }
+            if (user.address) {
+              console.log('✅ Setting address from context:', user.address)
+              setCurrentUserAddress(user.address)
+            }
+          } else {
+            console.warn('⚠️ User object is null or undefined in context')
           }
         } else {
+          console.log('⚠️ Context does not contain user data')
           // Fallback: try isInMiniApp check
           try {
             const isInMiniApp = await sdk.isInMiniApp()
@@ -252,6 +263,21 @@ export function PostList({ onEdit }: PostListProps) {
     (ADMIN_FID && currentUserFid === ADMIN_FID) ||
     normalizedUsername === normalizedAdminUsername || 
     (currentUserAddress && currentUserAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase())
+  
+  // Debug admin check
+  if (typeof window !== 'undefined') {
+    console.log('🔍 Admin check in PostList:', {
+      currentUserFid,
+      currentUserUsername,
+      normalizedUsername,
+      currentUserAddress,
+      ADMIN_USERNAME,
+      normalizedAdminUsername,
+      ADMIN_ADDRESS,
+      ADMIN_FID,
+      isAdmin
+    })
+  }
 
   if (loading && posts.length === 0) {
     return (

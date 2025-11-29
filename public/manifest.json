@@ -1,15 +1,11 @@
 {
   "name": "The Wall Base",
-  "short_name": "The Wall",
-  "description": "NFT Social Feed on Base - Create posts minted as NFTs",
+  "short_name": "The Wall Base",
+  "description": "Social Feed on Base - Create and share posts with the community",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
-  "iconUrl": "/icon.png",
-  "splashImageUrl": "/splash.png",
-  "heroImageUrl": "/og.png",
-  "ogImageUrl": "/og.png",
+  "background_color": "#1e293b",
+  "theme_color": "#1e293b",
   "icons": [
     {
       "src": "/icon.png",
