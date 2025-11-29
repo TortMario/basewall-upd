@@ -52,9 +52,7 @@ export function PostList({ onEdit }: PostListProps) {
             if (context.user.username) {
               setCurrentUserUsername(context.user.username)
             }
-            if (context.user.address) {
-              setCurrentUserAddress(context.user.address)
-            }
+            // Address is not available in context.user, it comes from wallet
           }
         }
       } catch (error) {
