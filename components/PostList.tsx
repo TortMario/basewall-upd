@@ -40,17 +40,21 @@ export function PostList({ onEdit }: PostListProps) {
         }
         
         // If we have context with user data, use it (even if isInMiniApp() was false)
-        if (context?.user) {
-          console.log('🔍 SDK user:', context.user)
-          if (context.user.fid) {
-            console.log('✅ Setting FID:', context.user.fid)
-            setCurrentUserFid(context.user.fid)
-          }
-          if (context.user.username) {
-            console.log('✅ Setting username:', context.user.username)
-            setCurrentUserUsername(context.user.username)
-          } else {
-            console.warn('⚠️ Username not found in SDK context')
+        if (context && typeof context === 'object' && 'user' in context) {
+          const contextWithUser = context as { user?: { fid?: number; username?: string } }
+          const user = contextWithUser.user
+          if (user) {
+            console.log('🔍 SDK user:', user)
+            if (user.fid) {
+              console.log('✅ Setting FID:', user.fid)
+              setCurrentUserFid(user.fid)
+            }
+            if (user.username) {
+              console.log('✅ Setting username:', user.username)
+              setCurrentUserUsername(user.username)
+            } else {
+              console.warn('⚠️ Username not found in SDK context')
+            }
           }
         } else {
           // Fallback: try isInMiniApp check
